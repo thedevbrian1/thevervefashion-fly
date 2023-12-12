@@ -36,7 +36,7 @@ function Hero() {
         {/* Text */}
         <h1 className="hidden">The verve fashion</h1>
         <div>
-          <p className="">The Verve Fasion specials</p>
+          <p className="">The Verve Fashion </p>
           <p className="text-4xl lg:text-6xl mt-2 font-heading">Up to <span className="text-brand-orange">40% off</span> on Kenya's latest trends!</p>
 
         </div>
