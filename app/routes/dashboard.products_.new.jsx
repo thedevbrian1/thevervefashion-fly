@@ -1,3 +1,4 @@
+import { unstable_composeUploadHandlers, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node";
 import { Form, Link } from "@remix-run/react";
 import { useState } from "react";
 import FormSpacer from "~/components/FormSpacer";
@@ -5,6 +6,7 @@ import { ArrowLeftIcon } from "~/components/Icon";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
+import { uploadImage } from "~/services/cloudinary.server";
 
 export async function action({ request }) {
     const uploadHandler = unstable_composeUploadHandlers(

@@ -32,7 +32,7 @@ export async function action({ request }) {
   switch (action) {
     case 'upload': {
       const res = await fetch('https://alg.li/doc-ecommerce.json');
-      const products = await res.json();
+      await res.json();
       // const savedObjects = index.saveObjects(products, {
       //     autoGenerateObjectIDIfNotExist: true
       // });
@@ -80,16 +80,16 @@ export default function Products() {
   );
 }
 
-function Hit({ hit }) {
-  return (
-    <article>
-      <img src={hit.image} alt={hit.name} />
-      <p>{hit.categories[0]}</p>
-      <h1>
-        <Highlight attribute="name" hit={hit} />
-      </h1>
-      <p>${hit.price}</p>
-    </article>
-  );
-}
+// function Hit({ hit }) {
+//   return (
+//     <article>
+//       <img src={hit.image} alt={hit.name} />
+//       <p>{hit.categories[0]}</p>
+//       <h1>
+//         <Highlight attribute="name" hit={hit} />
+//       </h1>
+//       <p>${hit.price}</p>
+//     </article>
+//   );
+// }
 

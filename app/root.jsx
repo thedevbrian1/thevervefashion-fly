@@ -12,13 +12,13 @@ import {
   useActionData,
   useLocation,
 } from "@remix-run/react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import algoliasearch from "algoliasearch";
-import { Highlight, Hits, InstantSearch, SearchBox } from "react-instantsearch";
+import { InstantSearch, SearchBox } from "react-instantsearch";
 import instantsearchStyles from "instantsearch.css/themes/satellite.css";
 import tailwindStyles from "./tailwind.css";
 import { navLinks } from "./utils";
-import { CartIcon, HamburgerIcon, InstagramIcon, TwitterIcon, XIcon } from "./components/Icon";
+import { InstagramIcon, TwitterIcon } from "./components/Icon";
 import Nav from "./components/Nav";
 import Input from "./components/Input";
 
