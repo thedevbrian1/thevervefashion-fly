@@ -10,9 +10,13 @@ import {
   Scripts,
   ScrollRestoration,
   useActionData,
+  useLoaderData,
   useLocation,
 } from "@remix-run/react";
+import { json } from "@remix-run/node";
 import { useEffect, useRef, useState } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import toastStyles from 'react-toastify/dist/ReactToastify.css';
 import algoliasearch from "algoliasearch";
 import { InstantSearch, SearchBox } from "react-instantsearch";
 import instantsearchStyles from "instantsearch.css/themes/satellite.css";
@@ -21,9 +25,12 @@ import { navLinks } from "./utils";
 import { InstagramIcon, TwitterIcon } from "./components/Icon";
 import Nav from "./components/Nav";
 import Input from "./components/Input";
+import { getSession, sessionStorage } from "./session.server";
+import { createClient } from "./supabase.server";
 
 export const links = () => [
   { rel: "stylesheet", href: tailwindStyles },
+  { rel: "stylesheet", href: toastStyles },
   {
     rel: "stylesheet", href: instantsearchStyles
   },
@@ -35,7 +42,28 @@ export const links = () => [
 
 const searchClient = algoliasearch("CNXGC6F83A", "848f2ed6be215b043a695b8be106f2cd");
 
+export async function loader({ request }) {
+  const [session, { supabaseClient, headers }] = await Promise.all([getSession(request), createClient(request)]);
+
+  const sbSession = await supabaseClient.auth.getSession();
+  const user = sbSession?.data?.session?.user;
+  const isLoggedIn = user ? true : false;
+
+  const toastMessage = session.get('toastMessage');
+
+  if (!toastMessage) {
+    return json({ toastMessage: null, isLoggedIn });
+  }
+
+  return json({ toastMessage, isLoggedIn }, {
+    headers: {
+      "Set-Cookie": await sessionStorage.commitSession(session)
+    }
+  });
+}
+
 export default function App() {
+  const { toastMessage, isLoggedIn } = useLoaderData();
   const actionData = useActionData();
   const location = useLocation();
 
@@ -43,6 +71,10 @@ export default function App() {
   const interceptRef = useRef(null);
 
   const [isIntersecting, setIsIntersecting] = useState(false);
+
+  const toastId = useRef(null);
+
+
 
   const footerLinks = [
     {
@@ -101,6 +133,24 @@ export default function App() {
     return () => observer.unobserve(intercept);
   }, []);
 
+  useEffect(() => {
+    if (!toastMessage) {
+      return;
+    }
+    const { message, type } = toastMessage;
+
+    switch (type) {
+      case "success":
+        toastId.current = toast.success(message);
+        break;
+
+      case "error":
+        toastId.current = toast.error(message);
+        break;
+    }
+    return () => toast.dismiss(toastId.current);
+  }, [toastMessage]);
+
   return (
     <html lang="en">
       <head>
@@ -118,7 +168,7 @@ export default function App() {
           ref={headerRef}
           className={`sticky top-0 w-full z-20 transition duration-500 ease-in-out py-4 px-4 lg:px-10 ${isIntersecting ? 'bg-transparent' : 'bg-white'} `}
         >
-          <Nav navLinks={navLinks} />
+          <Nav navLinks={navLinks} isLoggedIn={isLoggedIn} />
           {/* TODO: Prevent content shift before search bar is rendered */}
           {/* TODO: Search implementation..Use autocomplete */}
           <div className="lg:max-w-md mx-auto mt-4">
@@ -130,7 +180,9 @@ export default function App() {
                   : null
                 : location.pathname.includes('/dashboard')
                   ? null
-                  : <SearchBox />
+                  : (location.pathname === '/login' || location.pathname === '/signup')
+                    ? null
+                    : <SearchBox />
               }
             </InstantSearch>
           </div>
@@ -198,6 +250,7 @@ export default function App() {
           </div>
           <p className="text-center mt-8">Copyright &copy; {new Date().getFullYear()}</p>
         </footer>
+        <ToastContainer position="bottom-right" />
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
