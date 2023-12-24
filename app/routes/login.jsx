@@ -25,13 +25,15 @@ export async function action({ request }) {
     // Log in
     const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
+    console.log({ data });
+
     if (error) {
         throw new Error(error);
     }
     // Success toast
     setSuccessMessage(session, "Logged in successfully!");
 
-    const allHeaders = { ...Object.entries(headers.entries()), "Set-Cookie": await sessionStorage.commitSession(session) };
+    const allHeaders = { ...Object.fromEntries(headers.entries()), "Set-Cookie": await sessionStorage.commitSession(session) };
 
     return redirect('/dashboard', { headers: allHeaders });
 }
