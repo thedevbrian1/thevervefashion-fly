@@ -187,7 +187,7 @@ export default function NewProduct() {
                             </FormSpacer>
                             <button
                                 type="button"
-                                onClick={() => setAddSize(true)}
+                                // onClick={() => setAddSize(true)}
                                 className="text-sm text-blue-500"
                             >
                                 Add size
