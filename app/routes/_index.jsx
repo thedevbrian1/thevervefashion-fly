@@ -1,6 +1,8 @@
+import { json, redirect } from "@remix-run/node";
 import { Form, Link, isRouteErrorResponse, useRouteError } from "@remix-run/react";
 import { ArrowRightIcon, ErrorIllustration, MpesaIcon } from "~/components/Icon";
 import ProductCard from "~/components/ProductCard";
+import { createClient } from "~/supabase.server";
 import { featuredProducts } from "~/utils";
 
 export const meta = () => {
@@ -10,9 +12,19 @@ export const meta = () => {
   ];
 };
 
-// export async function loader() {
-//   throw new Error('Kaboom!');
-// }
+export async function loader({ request }) {
+  const { supabaseClient, headers } = createClient(request);
+
+  const sbSession = await supabaseClient.auth.getSession();
+  // console.log({ user: sbSession.data.session.user });
+
+  const user = sbSession?.data?.session?.user;
+  if (user) {
+    throw redirect('/dashboard', headers);
+  }
+
+  return json({ ok: true }, headers);
+}
 
 export default function Index() {
   return (
@@ -36,7 +48,7 @@ function Hero() {
         {/* Text */}
         <h1 className="hidden">The verve fashion</h1>
         <div>
-          <p className="">The Verve Fashion </p>
+          <p className="">The Verve Fashion specials</p>
           <p className="text-4xl lg:text-6xl mt-2 font-heading">Up to <span className="text-brand-orange">40% off</span> on Kenya's latest trends!</p>
 
         </div>

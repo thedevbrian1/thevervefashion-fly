@@ -1,12 +1,20 @@
-import { unstable_composeUploadHandlers, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node";
-import { Form, Link } from "@remix-run/react";
+import { json, unstable_composeUploadHandlers, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node";
+import { Form, Link, useActionData, useNavigation } from "@remix-run/react";
 import { useState } from "react";
+import { uploadImage } from "~/services/cloudinary.server";
 import FormSpacer from "~/components/FormSpacer";
 import { ArrowLeftIcon } from "~/components/Icon";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
-import { uploadImage } from "~/services/cloudinary.server";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "~/components/ui/select";
+
 
 export async function action({ request }) {
     const uploadHandler = unstable_composeUploadHandlers(
@@ -26,18 +34,32 @@ export async function action({ request }) {
 
     console.log({ image });
 
-    return null;
+    // if (image.length > 1) {
+    //     for (let current of image) {
+    //         await addImageToDb(current);
+    //     }
+    // } else {
+    //     await addImageToDb(image[0]);
+    // }
+
+    return json({ image });
 }
 
 export default function NewProduct() {
+    const actionData = useActionData();
+    const navigation = useNavigation();
+    const isSubmitting = navigation.state === 'submitting';
+
     const [images, setImages] = useState([]);
+    const [showVariants, setShowVariants] = useState(false);
+    console.log({ images });
+
 
     function handleImageChange(event) {
         const files = event.target.files;
+        let imagesArray = [...images];
 
-        // console.log({ files });
-
-        let imagesArray = [];
+        console.log({ files });
 
         for (let i = 0; i < files.length; i++) {
             const reader = new FileReader();
@@ -48,7 +70,6 @@ export default function NewProduct() {
                 }
             };
             reader.readAsDataURL(files[i]);
-
         }
     }
     return (
@@ -108,6 +129,18 @@ export default function NewProduct() {
                                                 />
                                             </div>
                                         ))}
+                                        {/* <label htmlFor="add-image" className="border border-dashed w-32 h-32 bg-gray-100 hover:bg-gray-200 grid place-items-center">
+                                            <span className="text-gray-500 text-sm">+ Add image</span>
+                                            <Input
+                                                type='file'
+                                                name='add-image'
+                                                id='add-image'
+                                                accept='image/png, image/jpg, image/jpeg'
+                                                onChange={handleImageChange}
+                                                multiple
+                                                className="hidden"
+                                            />
+                                        </label> */}
                                     </div>
                                 </div>
                             )}
@@ -137,16 +170,106 @@ export default function NewProduct() {
                         {/* TODO: Add cost per item, profit & margin */}
                     </div>
                     <div className="border border-slate-200 p-6 rounded space-y-4">
-                        {/* Variants */}
                         <p className="font-semibold">Variants</p>
-                        <button type='button' className="text-sm text-blue-500">+ Add options like size or colour</button>
+                        <div>
+                            <FormSpacer>
+                                <Label htmlFor='size'>Size</Label>
+                                <Select name="size" id="size">
+                                    <SelectTrigger className="w-[180px]">
+                                        <SelectValue placeholder="--Select variant--" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="xs">xs</SelectItem>
+                                        <SelectItem value="size">Size</SelectItem>
+                                        <SelectItem value="material">Material</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </FormSpacer>
+                            <button
+                                type="button"
+                                onClick={() => setAddSize(true)}
+                                className="text-sm text-blue-500"
+                            >
+                                Add size
+                            </button>
+                        </div>
+                        {/* {addSize && ()} */}
+                        {/* {
+                            !showVariants ?
+                                <button
+                                    type='button'
+                                    className="text-sm text-blue-500"
+                                    onClick={() => setShowVariants(true)}
+                                >
+                                    + Add options like size or colour
+                                </button>
+                                : null
+                        }
+                        {showVariants
+                            ? <div>
+                                <Label htmlFor="option">Option name</Label>
+                                <Select name="option" id="option">
+                                    <SelectTrigger className="w-[180px]">
+                                        <SelectValue placeholder="--Select variant--" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="colour">Colour</SelectItem>
+                                        <SelectItem value="size">Size</SelectItem>
+                                        <SelectItem value="material">Material</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Label htmlFor='value'>Option value</Label>
+                                <Input
+                                    type='text'
+                                    name='value'
+                                    id='value'
+                                />
+                                <button
+                                    type="button"
+                                    className="text-sm text-blue-500"
+                                    onClick={() => setShowVariants(true)}
+                                >
+                                    + Add another option
+                                </button>
+                            </div>
+                            : null
+                        } */}
                     </div>
                     <div className="flex gap-2 justify-end">
                         <button className="border border-slate-200 px-4 py-2 rounded">Cancel</button>
-                        <button type="submit" className="bg-brand-orange text-white px-8 py-2 rounded">Add</button>
+                        <button
+                            type="submit"
+                            className="bg-brand-orange text-white px-8 py-2 rounded"
+                        >
+                            {isSubmitting ? 'Adding...' : 'Add'}
+                        </button>
                     </div>
                 </fieldset>
             </Form>
+            {actionData?.fieldErrors?.imageSrc
+                ? (<span className="text-red-500">{actionData?.fieldErrors.imageSrc}</span>)
+                : null
+            }
+            <div className="mt-8">
+                {actionData?.image.length > 0
+                    ? (
+                        <div>
+                            <h3 className="text-gray-800">Uploaded images:</h3>
+                            <div className="flex gap-2 flex-wrap max-w-xl mt-2">
+                                {actionData?.image.map((image, index) => (
+                                    <div className="w-20 h-20" key={index}>
+                                        <img
+                                            src={image}
+                                            alt=""
+                                            className="w-full h-full object-cover"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>)
+                    : null
+                }
+            </div>
         </div>
     );
 }

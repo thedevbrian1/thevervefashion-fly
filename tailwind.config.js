@@ -24,7 +24,8 @@ module.exports = {
         'brand-orange': '#EB421C',
         'brand-black': '#3b3c36',
         'brand-brown': '#EAC691',
-        'brand-gray': '#F8F8F8'
+        'brand-gray': '#F8F8F8',
+        'brand-purple': '#6D4E90'
       },
       keyframes: {
         "accordion-down": {

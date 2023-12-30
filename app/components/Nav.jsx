@@ -1,8 +1,8 @@
-import { Link, NavLink, useLoaderData } from "@remix-run/react";
+import { Form, Link, NavLink, useLoaderData } from "@remix-run/react";
 import { CartIcon, HamburgerIcon, XIcon } from "./Icon";
 import { useState } from "react";
 
-export default function Nav({ navLinks }) {
+export default function Nav({ navLinks, isLoggedIn }) {
     const cartCount = useLoaderData();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -29,10 +29,22 @@ export default function Nav({ navLinks }) {
                     </li>
                     ))}
                 </ul>
-
-                <Link to={"/cart"} className="bg-brand-orange text-white px-8 py-2 rounded">
-                    Cart
-                </Link>
+                <div className="flex gap-2 items-center">
+                    <Link to={"/cart"} className="flex gap-2">
+                        <CartIcon /> Cart
+                    </Link>
+                    {isLoggedIn
+                        ? <Form method="post" action="/logout">
+                            <button
+                                type="submit"
+                                className="bg-red-500 text-white px-4 py-2 rounded"
+                            >
+                                Log out
+                            </button>
+                        </Form>
+                        : null
+                    }
+                </div>
             </div>
 
             {/* Mobile nav */}

@@ -11,7 +11,7 @@ async function uploadImage(data) {
     const uploadPromise = new Promise(async (resolve, reject) => {
         const uploadStream = cloudinary.v2.uploader.upload_stream(
             {
-                folder: "remix",
+                folder: "thevervefashion",
             },
             (error, result) => {
                 if (error) {

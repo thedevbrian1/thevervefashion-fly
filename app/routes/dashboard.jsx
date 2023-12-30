@@ -1,5 +1,11 @@
 import { Link, NavLink, Outlet, isRouteErrorResponse, useRouteError } from "@remix-run/react";
 import { BriefcaseIcon, ChartIcon, ErrorIllustration, PlusIcon } from "~/components/Icon";
+import { requireUser } from "~/supabase.server";
+
+export async function loader({ request }) {
+    await requireUser(request);
+    return null;
+}
 
 export default function Dashboard() {
     const sidenavMenu = [

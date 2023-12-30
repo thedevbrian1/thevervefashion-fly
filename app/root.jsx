@@ -46,19 +46,22 @@ export async function loader({ request }) {
   const [session, { supabaseClient, headers }] = await Promise.all([getSession(request), createClient(request)]);
 
   const sbSession = await supabaseClient.auth.getSession();
-  const user = sbSession?.data?.session?.user;
-  const isLoggedIn = user ? true : false;
+
+  // const user = sbSession.data.session.user;
+  const isLoggedIn = sbSession.data.session ? true : false;
 
   const toastMessage = session.get('toastMessage');
 
+  const allHeaders = { ...Object.fromEntries(headers.entries()), "Set-Cookie": await sessionStorage.commitSession(session) };
+
   if (!toastMessage) {
-    return json({ toastMessage: null, isLoggedIn });
+    return json({ toastMessage: null, isLoggedIn }, {
+      headers: allHeaders
+    });
   }
 
   return json({ toastMessage, isLoggedIn }, {
-    headers: {
-      "Set-Cookie": await sessionStorage.commitSession(session)
-    }
+    headers: allHeaders
   });
 }
 
@@ -132,6 +135,8 @@ export default function App() {
 
     return () => observer.unobserve(intercept);
   }, []);
+
+  // TODO: Fix flash of toast
 
   useEffect(() => {
     if (!toastMessage) {
