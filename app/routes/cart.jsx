@@ -1,4 +1,5 @@
 import { Form, Link, isRouteErrorResponse, useRouteError } from "@remix-run/react";
+import { TrashIcon } from "lucide-react";
 import { ErrorIllustration, ReceiptIllustration, XIcon } from "~/components/Icon";
 
 export async function action({ request }) {
@@ -45,9 +46,10 @@ export default function Cart() {
 
 function CartItem() {
     return (
-        <div className="border border-slate-200 rounded p-6">
-            <div className="w-5 h-5">
+        <div className="border border-slate-200 rounded p-6 relative">
+            <div className="w-4 h-4 text-red-500 absolute top-3 right-3">
                 <XIcon />
+                {/* <TrashIcon /> */}
             </div>
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -63,7 +65,7 @@ function CartItem() {
                     <input type="text" name="quantity" className="w-10 px-2 border border-gray-100 rounded" defaultValue={1} readOnly />
                     <button type="submit" name="_action" value="add" className="bg-gray-100 px-2 rounded">+</button>
                 </div>
-                <p>Ksh 3999</p>
+                <p className="ml-4">Ksh 3999</p>
             </div>
         </div>
     );

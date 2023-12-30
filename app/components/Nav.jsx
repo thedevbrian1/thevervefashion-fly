@@ -1,14 +1,30 @@
 import { Form, Link, NavLink, useLoaderData } from "@remix-run/react";
-import { CartIcon, HamburgerIcon, XIcon } from "./Icon";
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { CartIcon, HamburgerIcon, XIcon } from "./Icon";
+import { navLinks } from "~/utils";
 
 export default function Nav({ navLinks, isLoggedIn }) {
     const cartCount = useLoaderData();
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isMenuShowing, setIsMenuShowing] = useState(false);
 
     function toggleMenu() {
-        setIsMenuOpen(!isMenuOpen);
+        setIsMenuShowing(!isMenuShowing);
     }
+    const container = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.2
+            }
+        }
+    };
+
+    const item = {
+        hidden: { opacity: 0 },
+        show: { opacity: 1 }
+    };
     return (
         <nav className="flex justify-between w-full">
             {/* Desktop nav */}
@@ -65,36 +81,40 @@ export default function Nav({ navLinks, isLoggedIn }) {
 
                     </NavLink>
 
-                    <HamburgerIcon toggleMenu={toggleMenu} />
+                    <button onClick={toggleMenu}><HamburgerIcon /></button>
                 </div>
-                {
-                    isMenuOpen && (
-                        <div className='flex flex-col justify-center items-center bg-black opacity-90 w-full h-screen fixed z-10 top-0 left-0 transition duration-500 ease-in-out'>
-                            <span className="absolute top-[50px] right-2">
-                                <XIcon toggleMenu={toggleMenu} />
-                            </span>
-                            <ul className='list-none text-center mr-4 text-white'>
-                                {navLinks.map((navLink, index) => (
-                                    <li
-                                        className='text-xl'
-                                        key={index}
-                                        onClick={() => setIsMenuOpen(false)}
+                {isMenuShowing && (
+                    <div className='flex flex-col justify-center items-center bg-white text-black w-full h-screen fixed z-10 top-0 left-0 transition duration-500 ease-in-out px-4'>
+                        <button
+                            className="absolute top-4 right-[15px]"
+                            onClick={toggleMenu}
+                        >
+                            <XIcon />
+                        </button>
+                        <motion.ul
+                            variants={container}
+                            initial="hidden"
+                            animate="show"
+                            className="text-center mr-4">
+                            {navLinks.map((link, index) => (
+                                <motion.li key={index} variants={item}>
+                                    <Link
+                                        to={link.path}
+                                        prefetch="intent"
+                                        className="hover:text-brand-orange transition ease-in-out duration-300"
+                                        onClick={() => setIsMenuShowing(false)}
                                     >
-                                        <NavLink
-                                            to={navLink.path}
-                                            prefetch='intent'
-                                            end
-                                            className={({ isActive }) => isActive ? 'bg-brand-gray px-5 py-2' : ''}
-                                        >
-                                            {navLink.name}
-                                        </NavLink>
-                                    </li>
-
-                                ))}
-                            </ul>
-                        </div>
-                    )
-                }
+                                        {link.text}
+                                    </Link>
+                                </motion.li>
+                            ))}
+                            <motion.li variants={item} className="mt-4">
+                                <Link to="/login" className="bg-brand-orange hover:bg-white hover:text-black transition ease-in-out duration-300 text-white px-10 py-2">Log in</Link>
+                            </motion.li>
+                        </motion.ul>
+                        <img src="/loungewear.jpeg" alt="" className="object-cover aspect-video mt-16" />
+                    </div>
+                )}
             </div>
         </nav>
     );

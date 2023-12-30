@@ -167,6 +167,15 @@ export default function NewProduct() {
                                 placeholder='0'
                             />
                         </FormSpacer>
+                        <FormSpacer>
+                            <Label htmlFor='purchase-price'>Purchase price (price you bought the item)</Label>
+                            <Input
+                                type='text'
+                                name='purchase-price'
+                                id='purchase-price'
+                                placeholder='0'
+                            />
+                        </FormSpacer>
                         {/* TODO: Add cost per item, profit & margin */}
                     </div>
                     <div className="border border-slate-200 p-6 rounded space-y-4">
@@ -179,61 +188,24 @@ export default function NewProduct() {
                                         <SelectValue placeholder="--Select variant--" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="xs">xs</SelectItem>
-                                        <SelectItem value="size">Size</SelectItem>
-                                        <SelectItem value="material">Material</SelectItem>
+                                        <SelectItem value="xs">XS</SelectItem>
+                                        <SelectItem value="sm">SM</SelectItem>
+                                        <SelectItem value="md">MD</SelectItem>
+                                        <SelectItem value="lg">LG</SelectItem>
+                                        <SelectItem value="xl">XL</SelectItem>
+                                        <SelectItem value="xxl">XXL</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </FormSpacer>
-                            <button
+                            {/* <button
                                 type="button"
-                                // onClick={() => setAddSize(true)}
+                                onClick={() => setAddSize(true)}
                                 className="text-sm text-blue-500"
                             >
                                 Add size
-                            </button>
+                            </button> */}
                         </div>
-                        {/* {addSize && ()} */}
-                        {/* {
-                            !showVariants ?
-                                <button
-                                    type='button'
-                                    className="text-sm text-blue-500"
-                                    onClick={() => setShowVariants(true)}
-                                >
-                                    + Add options like size or colour
-                                </button>
-                                : null
-                        }
-                        {showVariants
-                            ? <div>
-                                <Label htmlFor="option">Option name</Label>
-                                <Select name="option" id="option">
-                                    <SelectTrigger className="w-[180px]">
-                                        <SelectValue placeholder="--Select variant--" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="colour">Colour</SelectItem>
-                                        <SelectItem value="size">Size</SelectItem>
-                                        <SelectItem value="material">Material</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <Label htmlFor='value'>Option value</Label>
-                                <Input
-                                    type='text'
-                                    name='value'
-                                    id='value'
-                                />
-                                <button
-                                    type="button"
-                                    className="text-sm text-blue-500"
-                                    onClick={() => setShowVariants(true)}
-                                >
-                                    + Add another option
-                                </button>
-                            </div>
-                            : null
-                        } */}
+
                     </div>
                     <div className="flex gap-2 justify-end">
                         <button className="border border-slate-200 px-4 py-2 rounded">Cancel</button>

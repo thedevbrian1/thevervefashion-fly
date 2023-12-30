@@ -1,4 +1,4 @@
-export function HamburgerIcon({ toggleMenu }) {
+export function HamburgerIcon() {
     return (
         <svg
             className="w-6 h-6"
@@ -6,22 +6,20 @@ export function HamburgerIcon({ toggleMenu }) {
             stroke="#282C35"
             viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg"
-            onClick={toggleMenu}
         >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
     );
 }
 
-export function XIcon({ toggleMenu }) {
+export function XIcon() {
     return (
         <svg
             className="w-6 h-6"
             fill="none"
-            stroke="#ffffff"
+            stroke="#282C35"
             viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg"
-            onClick={toggleMenu}
         >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
         </svg>
