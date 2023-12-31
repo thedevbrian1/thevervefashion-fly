@@ -36,11 +36,21 @@ export async function action({ request }) {
 
     const { supabaseClient, headers } = createClient(request);
 
+    function getRedirectURL() {
+        if (process.env.NODE_ENV === 'production') {
+            return 'https://thevervefashion.com'
+        } else if (process.env.NODE_ENV === 'development') {
+            return 'http://localhost:3000'
+        }
+    }
 
     // Sign up
     const { data, error } = await supabaseClient.auth.signUp({
         email,
-        password
+        password,
+        options: {
+            emailRedirectTo: getRedirectURL()
+        }
     });
 
     if (error) {
