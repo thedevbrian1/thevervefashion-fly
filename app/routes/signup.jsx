@@ -165,6 +165,11 @@ export default function Signup() {
                         {actionData.formError}
                     </p>
                     : null}
+                <div className="mt-4">
+                    <Link to="/login" className="text-blue-500 hover:text-blue-400 underline">
+                        Already have an account? Log in instead
+                    </Link>
+                </div>
             </div>
         </main>
     );

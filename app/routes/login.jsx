@@ -1,6 +1,7 @@
 import { redirect } from "@remix-run/node";
-import { Form, useActionData } from "@remix-run/react";
+import { Form, Link, isRouteErrorResponse, useActionData, useNavigation, useRouteError } from "@remix-run/react";
 import FormSpacer from "~/components/FormSpacer";
+import { ErrorIllustration } from "~/components/Icon";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -40,11 +41,13 @@ export async function action({ request }) {
 
 export default function Login() {
     const actionData = useActionData();
+    const navigation = useNavigation();
+    const isSubmitting = navigation.state === 'submitting';
 
     return (
         <main className="min-h-screen w-full bg-[url('/ecommerce.jpg')] bg-cover bg-center bg-no-repeat bg-black bg-blend-overlay bg-opacity-50 grid place-items-center">
             {/* FIXME: Fix form width */}
-            <div className="max-w-xs lg:w-96 mx-auto bg-gray-200 bg-opacity-70 rounded p-6">
+            <div className="max-w-xs lg:max-w-sm mx-auto bg-gray-200 bg-opacity-70 rounded p-6">
                 <h1 className="font-heading text-2xl lg:text-3xl">Login</h1>
                 <Form method="post" className="mt-4 w-full">
                     <fieldset className="space-y-4">
@@ -79,10 +82,65 @@ export default function Login() {
                                 : null
                             }
                         </FormSpacer>
-                        <Button type="submit" className="bg-brand-orange text-white">Log in</Button>
+                        <Button type="submit" className="bg-brand-orange text-white">
+                            {isSubmitting ? 'Logging in...' : 'Log in'}
+                        </Button>
+                        {/* TODO: Add remember me */}
                     </fieldset>
                 </Form>
+                <div className="flex justify-between text-blue-500 text-sm underline mt-4">
+                    <Link to="/login" className="hover:text-blue-400">
+                        Forgot password
+                    </Link>
+                    <Link to="/signup" className="hover:text-blue-400">
+                        Don't have an account? Sign up instead
+                    </Link>
+                </div>
             </div>
         </main>
     );
+}
+
+export function ErrorBoundary() {
+    const error = useRouteError();
+
+    if (isRouteErrorResponse(error)) {
+        console.log({ error });
+        return (
+            <div className="bg-red-100 text-red-500 w-full h-screen grid place-items-center px-4 py-6">
+                <div className="flex flex-col items-center gap-2">
+                    <div className="flex flex-col items-center">
+                        <div className="w-60 lg:w-72">
+                            <ErrorIllustration />
+                        </div>
+                        <h1 className="text-3xl font-semibold mt-4">{error.status} {error.statusText}</h1>
+                        <p>{error.data}</p>
+                    </div>
+                    <Link to='.' className="underline text-brand-black">
+                        Try again
+                    </Link>
+                </div>
+            </div>
+        );
+    } else if (error instanceof Error) {
+        console.log({ error });
+        return (
+            <div className="bg-red-100 text-red-500 w-full h-screen grid place-items-center px-4 py-6">
+                <div className="flex flex-col items-center gap-2">
+                    <div className="flex flex-col items-center">
+                        <div className="w-60 lg:w-72">
+                            <ErrorIllustration />
+                        </div>
+                        <h1 className="text-3xl font-semibold mt-4">Error</h1>
+                        <p>{error.message}</p>
+                    </div>
+                    <Link to="." className="underline text-brand-black">
+                        Try again
+                    </Link>
+                </div>
+            </div>
+        );
+    } else {
+        return <h1>Unknown Error</h1>;
+    }
 }
