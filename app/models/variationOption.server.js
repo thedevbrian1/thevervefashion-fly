@@ -1,16 +1,14 @@
 import { createClient } from "~/supabase.server";
 
-export async function addImage(request, imageSrc, productId) {
+export async function addVariationOption(request, value, variationId) {
     const { supabaseClient, headers } = createClient(request);
     const { data, error } = await supabaseClient
-        .from('Images')
+        .from('Variation_options')
         .insert([
             {
-                image_src: imageSrc,
-                product_id: productId
+                value,
+                variation_id: variationId
             }
-        ])
-        .select();
-
+        ]).select();
     return { data, error, headers };
 }
