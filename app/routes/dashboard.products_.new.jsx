@@ -14,35 +14,135 @@ import {
     SelectTrigger,
     SelectValue,
 } from "~/components/ui/select";
+import { badRequest, validatePrice, validateText } from "~/utils";
+import { addProduct } from "~/models/product.server";
+import { addImage } from "~/models/image.server";
+import { getCategories, getCategoryId } from "~/models/category.server";
+import { addProductItem } from "~/models/productItem.server";
+import { addVariation } from "~/models/variation.server";
+import { addVariationOption } from "~/models/variationOption.server";
+import { getSession, sessionStorage, setSuccessMessage } from "~/session.server";
 
+export function meta() {
+    return [
+        { title: 'Dashboard | The Verve Fashion' }
+    ]
+}
+
+export async function loader({ request }) {
+    // const { data: categories, error: categoryError, headers: categoryHeaders } = await getCategoryId(request, 'dress');
+    // console.log({ categories });
+    // console.log({ categoryHeaders });
+    return null;
+}
 
 export async function action({ request }) {
+    const session = await getSession(request);
+
     const uploadHandler = unstable_composeUploadHandlers(
         async ({ name, data }) => {
             if (name !== "image") {
                 return undefined;
             }
+            // TODO: Don't upload image if there is a validation error
             const uploadedImage = await uploadImage(data);
             // console.log({ uploadedImage });
             return uploadedImage.secure_url;
+            // return null;
         },
         unstable_createMemoryUploadHandler()
     );
 
     const formData = await unstable_parseMultipartFormData(request, uploadHandler);
+
     const image = formData.getAll('image');
+    const title = formData.get('title');
+    const description = formData.get('description');
+    const category = formData.get('category');
+    const quantity = formData.get('quantity');
+    const price = formData.get('price');
+    const comparePrice = formData.get('compare-price');
+    const purchasePrice = formData.get('purchase-price');
+    const size = formData.get('size');
+    const colour = formData.get('colour');
 
     console.log({ image });
 
-    // if (image.length > 1) {
-    //     for (let current of image) {
-    //         await addImageToDb(current);
-    //     }
-    // } else {
-    //     await addImageToDb(image[0]);
-    // }
+    const fieldErrors = {
+        title: validateText(title),
+        description: validateText(description),
+        price: validatePrice(price),
+        comparePrice: validatePrice(comparePrice),
+        purchasePrice: validatePrice(purchasePrice),
+        colour: validateText(colour)
+    };
 
-    return json({ image });
+    if (Object.values(fieldErrors).some(Boolean)) {
+        return badRequest({ fieldErrors });
+    }
+
+    // Steps to add item to the database
+    // 1. Get category id
+    // 2. Add product with category id
+    // 3. Add product item with product id
+    // 4. Add image(s) with product id
+    // 5. Add variant with product id
+    // 6. Add variation option with variation id
+
+
+    const { data: categories, error: categoryError, headers: categoryHeaders } = await getCategoryId(request, category);
+    const categoryId = categories[0].id;
+
+    const { data: product, error: productError, headers: productHeaders } = await addProduct(request, title, description, categoryId);
+    const productId = product[0].id;
+
+    const { data: productItem, error: productItemError, headers: productItemHeaders } = await addProductItem(request, productId, quantity, price, comparePrice, purchasePrice);
+
+    const imageResponse = await Promise.all(image.map(async (image) => {
+        const { data, error, headers } = await addImage(request, image, productId);
+        return { data, error, headers };
+    }));
+
+    // console.log({ imageResponse });
+
+    // let mergedImageHeaders = [];
+
+    // imageResponse.forEach(image => {
+    //     mergedImageHeaders = { ...mergedImageHeaders, ...image.headers };
+    // });
+
+    // console.log({ mergedImageHeaders });
+
+    const { data: sizeVariant, error: sizeVariantError, headers: sizeVariantHeaders } = await addVariation(request, 'size', productId);
+    const sizeVariantId = sizeVariant[0].id;
+
+    const { data: sizeVariantValue, error: sizeVariantValueError, headers: sizeVariantValueHeaders } = await addVariationOption(request, size, sizeVariantId);
+
+    const { data: colourVariant, error: colourVariantError, headers: colourVariantHeaders } = await addVariation(request, 'colour', productId);
+    const colourVariantId = colourVariant[0].id;
+
+    const { data: colourVariantValue, error: colourVariantValueError, headers: colourVariantValueHeaders } = await addVariationOption(request, colour, colourVariantId)
+
+    setSuccessMessage(session, 'Product added successfully!');
+
+    const allHeaders = {
+        ...Object.fromEntries(categoryHeaders.entries()),
+        ...Object.fromEntries(productHeaders.entries()),
+        ...Object.fromEntries(productItemHeaders.entries()),
+        // ...Object.fromEntries(mergedImageHeaders.entries()),
+        ...Object.fromEntries(sizeVariantHeaders.entries()),
+        ...Object.fromEntries(sizeVariantValueHeaders.entries()),
+        ...Object.fromEntries(colourVariantHeaders.entries()),
+        ...Object.fromEntries(colourVariantValueHeaders.entries()),
+        "Set-Cookie": await sessionStorage.commitSession(session)
+    }
+
+    console.log({ allHeaders });
+
+
+    return (`/dashboard/product/${productId}`, {
+        headers: allHeaders
+    });
 }
 
 export default function NewProduct() {
@@ -90,6 +190,10 @@ export default function NewProduct() {
                                 id='title'
                                 placeholder='Maxi dress'
                             />
+                            {actionData?.fieldErrors?.title
+                                ? <p className="text-red-500 text-sm">{actionData.fieldErrors.title}</p>
+                                : null
+                            }
                         </FormSpacer>
                         <FormSpacer>
                             <Label htmlFor='description'>Description</Label>
@@ -98,6 +202,38 @@ export default function NewProduct() {
                                 id='description'
                                 placeholder='Enter description here..'
                             />
+                            {actionData?.fieldErrors?.description
+                                ? <p className="text-red-500 text-sm">{actionData.fieldErrors.description}</p>
+                                : null
+                            }
+                        </FormSpacer>
+                        <FormSpacer>
+                            <Label htmlFor='category'>Category</Label>
+                            <Select name="category" id="category">
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="--Select category--" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="dress">Dresses</SelectItem>
+                                    <SelectItem value="loungewear">Loungewear</SelectItem>
+                                    <SelectItem value="corset-top">Corset tops</SelectItem>
+                                    <SelectItem value="two-piece-set">Two piece set</SelectItem>
+                                    <SelectItem value="basic">Basics</SelectItem>
+                                    <SelectItem value="accessory">Accessories</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </FormSpacer>
+                        <FormSpacer>
+                            <Label htmlFor="quantity">Quantity</Label>
+                            <Input
+                                type='number'
+                                name='quantity'
+                                id='quantity'
+                            />
+                            {actionData?.fieldErrors?.quantity
+                                ? <p className="text-red-500 text-sm">{actionData.fieldErrors.quantity}</p>
+                                : null
+                            }
                         </FormSpacer>
                     </div>
 
@@ -112,6 +248,8 @@ export default function NewProduct() {
                                 accept='image/png, image/jpg, image/jpeg'
                                 onChange={handleImageChange}
                                 multiple
+                                // required
+                                className="file:py-2 file:px-4 file:rounded-full file:bg-orange-50 file:text-brand-orange hover:file:bg-orange-100"
                             />
                         </FormSpacer>
 
@@ -148,44 +286,59 @@ export default function NewProduct() {
                     </div>
 
                     <div className="border border-slate-200 p-6 rounded space-y-4">
-                        <p className="font-semibold">Pricing</p>
+                        <p className="font-semibold">Pricing (Kshs)</p>
                         <FormSpacer>
                             <Label htmlFor='price'>Price</Label>
                             <Input
-                                type='text'
+                                type='number'
                                 name='price'
                                 id='price'
                                 placeholder='0'
+                                min="1"
                             />
+                            {actionData?.fieldErrors?.price
+                                ? <p className="text-red-500 text-sm">{actionData.fieldErrors.price}</p>
+                                : null
+                            }
                         </FormSpacer>
                         <FormSpacer>
                             <Label htmlFor='compare'>Compare-at price</Label>
                             <Input
-                                type='text'
+                                type='number'
                                 name='compare-price'
                                 id='compare'
                                 placeholder='0'
+                                min="1"
                             />
+                            {actionData?.fieldErrors?.comparePrice
+                                ? <p className="text-red-500 text-sm">{actionData.fieldErrors.comparePrice}</p>
+                                : null
+                            }
                         </FormSpacer>
                         <FormSpacer>
                             <Label htmlFor='purchase-price'>Purchase price (price you bought the item)</Label>
                             <Input
-                                type='text'
+                                type='number'
                                 name='purchase-price'
                                 id='purchase-price'
                                 placeholder='0'
+                                min="1"
                             />
+                            {actionData?.fieldErrors?.purchasePrice
+                                ? <p className="text-red-500 text-sm">{actionData.fieldErrors.purchasePrice}</p>
+                                : null
+                            }
                         </FormSpacer>
                         {/* TODO: Add cost per item, profit & margin */}
                     </div>
                     <div className="border border-slate-200 p-6 rounded space-y-4">
                         <p className="font-semibold">Variants</p>
-                        <div>
+                        <div className="space-y-4">
                             <FormSpacer>
                                 <Label htmlFor='size'>Size</Label>
                                 <Select name="size" id="size">
                                     <SelectTrigger className="w-[180px]">
-                                        <SelectValue placeholder="--Select variant--" />
+                                        <SelectValue placeholder="--Select size--" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="xs">XS</SelectItem>
@@ -196,6 +349,19 @@ export default function NewProduct() {
                                         <SelectItem value="xxl">XXL</SelectItem>
                                     </SelectContent>
                                 </Select>
+                            </FormSpacer>
+                            <FormSpacer>
+                                <Label htmlFor="colour">Colour</Label>
+                                <Input
+                                    type='text'
+                                    name='colour'
+                                    id='colour'
+                                    placeholder='Black'
+                                />
+                                {actionData?.fieldErrors?.colour
+                                    ? <p className="text-red-500 text-sm">{actionData.fieldErrors.colour}</p>
+                                    : null
+                                }
                             </FormSpacer>
                             {/* <button
                                 type="button"
@@ -222,8 +388,8 @@ export default function NewProduct() {
                 ? (<span className="text-red-500">{actionData?.fieldErrors.imageSrc}</span>)
                 : null
             }
-            <div className="mt-8">
-                {actionData?.image.length > 0
+            {/* <div className="mt-8">
+                {actionData?.image?.length > 0
                     ? (
                         <div>
                             <h3 className="text-gray-800">Uploaded images:</h3>
@@ -241,7 +407,7 @@ export default function NewProduct() {
                         </div>)
                     : null
                 }
-            </div>
+            </div> */}
         </div>
     );
 }
