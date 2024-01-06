@@ -53,7 +53,7 @@ export default function Nav({ navLinks, isLoggedIn }) {
                         ? <Form method="post" action="/logout">
                             <button
                                 type="submit"
-                                className="bg-red-500 text-white px-4 py-2 rounded"
+                                className="bg-brand-purple text-white px-4 py-2 rounded"
                             >
                                 Log out
                             </button>
@@ -108,9 +108,23 @@ export default function Nav({ navLinks, isLoggedIn }) {
                                     </Link>
                                 </motion.li>
                             ))}
-                            <motion.li variants={item} className="mt-4">
-                                <Link to="/login" className="bg-brand-orange hover:bg-white hover:text-black transition ease-in-out duration-300 text-white px-10 py-2">Log in</Link>
-                            </motion.li>
+                            {/*TODO: If you're logged in show logout button */}
+                            {isLoggedIn
+                                ? (
+                                    <Form method="post" action="/logout">
+                                        <button
+                                            type="submit"
+                                            className="bg-brand-purple text-white px-4 py-2 rounded"
+                                        >
+                                            Log out
+                                        </button>
+                                    </Form>
+                                )
+                                : (<motion.li variants={item} className="mt-4">
+                                    <Link to="/login" className="bg-brand-orange hover:bg-white hover:text-black transition ease-in-out duration-300 text-white px-10 py-2">Log in</Link>
+                                </motion.li>)
+                            }
+
                         </motion.ul>
                         <img src="/loungewear.jpeg" alt="" className="object-cover aspect-video mt-16" />
                     </div>

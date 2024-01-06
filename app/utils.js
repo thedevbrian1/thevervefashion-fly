@@ -105,8 +105,24 @@ export function validatePhone(phone) {
     }
 }
 
+export function validateText(text) {
+    if (typeof text !== "string" || text.length < 2) {
+        return 'Input is invalid';
+    }
+}
+
+export function validatePrice(price) {
+    if (typeof price !== "string") {
+        return 'Invalid price';
+    }
+}
+
 export function trimValue(value) {
     return value.replace(/\D+/g, '');
+}
+
+export function trimString(string) {
+    return string.trim().split(' ').join('').toLowerCase();
 }
 
 export function badRequest(data) {
