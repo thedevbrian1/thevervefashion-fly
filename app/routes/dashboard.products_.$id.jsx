@@ -11,7 +11,7 @@ import { getProductById } from "~/models/product.server";
 
 export async function loader({ request, params }) {
     const res = await getCategories(request);
-    const product = await getProductById(request, 13);
+    const product = await getProductById(request, Number(params.id));
     const categories = res.data.map(category => category.title);
     // console.log({ res });
     return { product, categories };
