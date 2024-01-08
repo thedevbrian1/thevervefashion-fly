@@ -12,6 +12,7 @@ import {
   useActionData,
   useLoaderData,
   useLocation,
+  useNavigation,
 } from "@remix-run/react";
 import { json } from "@remix-run/node";
 import { useEffect, useRef, useState } from "react";
@@ -69,6 +70,9 @@ export default function App() {
   const { toastMessage, isLoggedIn } = useLoaderData();
   const actionData = useActionData();
   const location = useLocation();
+  const navigation = useNavigation();
+
+  const isLoading = navigation.state === 'loading';
 
   const headerRef = useRef(null);
   const interceptRef = useRef(null);
@@ -164,7 +168,7 @@ export default function App() {
         <Meta />
         <Links />
       </head>
-      <body className="font-body text-brand-black">
+      <body className={`font-body text-brand-black ${isLoading ? 'opacity-50' : ''}`}>
         {/* FIXME: Fix the white flash when the navbar position is changing */}
         {/* FIXME: Fix content going over the navbar before it fully loads */}
 
