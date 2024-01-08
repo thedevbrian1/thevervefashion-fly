@@ -1,4 +1,4 @@
-import { json, unstable_composeUploadHandlers, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node";
+import { json, redirect, unstable_composeUploadHandlers, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node";
 import { Form, Link, useActionData, useNavigation } from "@remix-run/react";
 import { useState } from "react";
 import { uploadImage } from "~/services/cloudinary.server";
@@ -65,8 +65,6 @@ export async function action({ request }) {
     const purchasePrice = formData.get('purchase-price');
     const size = formData.get('size');
     const colour = formData.get('colour');
-
-    console.log({ image });
 
     const fieldErrors = {
         title: validateText(title),
@@ -137,10 +135,8 @@ export async function action({ request }) {
         "Set-Cookie": await sessionStorage.commitSession(session)
     }
 
-    console.log({ allHeaders });
 
-
-    return (`/dashboard/product/${productId}`, {
+    return redirect(`/dashboard/products/${productId}`, {
         headers: allHeaders
     });
 }
@@ -177,7 +173,7 @@ export default function NewProduct() {
             <Link to="/dashboard/products" className="flex gap-2 hover:text-brand-orange transition duration-300 ease-in-out">
                 <ArrowLeftIcon /> Back to products
             </Link>
-            <h1 className="font-heading mt-8 font-semibold">Add product</h1>
+            <h1 className="font-heading mt-8 font-semibold text-2xl lg:text-3xl">Add product</h1>
             <Form method="post" encType="multipart/form-data" className="max-w-sm xl:max-w-xl mt-8">
                 <fieldset className="space-y-4">
                     <div className="border border-slate-200 p-6 rounded space-y-4">
@@ -248,7 +244,7 @@ export default function NewProduct() {
                                 accept='image/png, image/jpg, image/jpeg'
                                 onChange={handleImageChange}
                                 multiple
-                                // required
+                                required
                                 className="file:py-2 file:px-4 file:rounded-full file:bg-orange-50 file:text-brand-orange hover:file:bg-orange-100"
                             />
                         </FormSpacer>

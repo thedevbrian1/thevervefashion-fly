@@ -33,3 +33,10 @@ export { uploadImage };
 export async function deleteCloudinaryImage(id) {
     return cloudinary.v2.uploader.destroy(id);
 }
+
+export function getCloudinaryPublicId(imageUrl) {
+    const regex = /thevervefashion\/([a-zA-Z0-9]+)/;
+    const match = imageUrl.match(regex);
+    const publicId = match ? match[0] : '';
+    return publicId;
+}

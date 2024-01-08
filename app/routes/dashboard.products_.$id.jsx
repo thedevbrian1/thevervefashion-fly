@@ -1,13 +1,20 @@
-import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
+import { json } from "@remix-run/node";
+import { Form, Link, useActionData, useFetcher, useLoaderData, useNavigation } from "@remix-run/react";
+// import { TrashIcon } from "lucide-react";
 import FormSpacer from "~/components/FormSpacer";
-import { PlusIcon } from "~/components/Icon";
+import { PlusIcon, TrashIcon } from "~/components/Icon";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
-import { getCategories } from "~/models/category.server";
+import { getCategories, getCategoryId } from "~/models/category.server";
+import { deletemage } from "~/models/image.server";
 import { getProductById } from "~/models/product.server";
+import { deleteCloudinaryImage, getCloudinaryPublicId } from "~/services/cloudinary.server";
+import { getSession, sessionStorage, setSuccessMessage } from "~/session.server";
+import { createClient } from "~/supabase.server";
+import { badRequest, validatePrice, validateQuantity, validateText } from "~/utils";
 
 export async function loader({ request, params }) {
     const res = await getCategories(request);
@@ -16,6 +23,145 @@ export async function loader({ request, params }) {
     // console.log({ res });
     return { product, categories };
 }
+
+export async function action({ request, params }) {
+    const id = Number(params.id);
+    const session = await getSession(request);
+
+    const formData = await request.formData();
+    const action = formData.get('_action');
+    const intent = formData.get('intent');
+    const imageId = formData.get('imageId');
+    const imageSrc = formData.get('imageSrc');
+
+    const { supabaseClient, headers } = createClient(request);
+
+    // TODO: Perform the various db updates
+    switch (action) {
+        case 'product': {
+            console.log('product');
+
+            if (intent === 'save') {
+                const title = formData.get('title');
+                const description = formData.get('description');
+                const category = formData.get('category');
+                const quantity = formData.get('quantity');
+
+                const fieldErrors = {
+                    title: validateText(title),
+                    description: validateText(description),
+                    quantity: validateQuantity(quantity)
+                };
+
+                if (Object.values(fieldErrors).some(Boolean)) {
+                    return badRequest({ fieldErrors });
+                }
+
+                const { data: categories, error: categoryError, headers: categoryHeaders } = await getCategoryId(request, category);
+                const categoryId = categories[0].id;
+
+                const [
+                    { data: product, error: productError },
+                    { data: productItem, error: productItemError }
+                ] = await Promise.all([
+                    supabaseClient
+                        .from('Products')
+                        .update({ title, description, category_id: categoryId })
+                        .eq('id', id)
+                        .select(),
+                    supabaseClient
+                        .from('Product_item')
+                        .update({ quantity: Number(quantity) })
+                        .eq('product_id', id)
+                        .select()
+                ]);
+
+                setSuccessMessage(session, "Updated successfully!");
+            }
+            break;
+        }
+        case 'image': {
+            const publicId = getCloudinaryPublicId(imageSrc);
+            // Delete image from db
+            const { data, error, headers } = await deletemage(request, Number(imageId));
+            console.log({ data });
+
+            // Delete image from cloudinary
+            const deleted = await deleteCloudinaryImage(publicId);
+            console.log({ deleted });
+            break;
+        }
+        case 'pricing': {
+            console.log('Pricing');
+            if (intent === 'save') {
+                const price = formData.get('price');
+                const comparePrice = formData.get('compare-price');
+                const purchasePrice = formData.get('purchase-price');
+
+                const fieldErrors = {
+                    price: validatePrice(Number(price)),
+                    comparePrice: validatePrice(Number(comparePrice)),
+                    purchasePrice: validatePrice(Number(purchasePrice))
+                };
+
+                if (Object.values(fieldErrors).some(Boolean)) {
+                    return badRequest({ fieldErrors });
+                }
+
+                const { data, error } = await supabaseClient
+                    .from('Product_item')
+                    .update({ price: Number(price), compare_price: Number(comparePrice), purchase_price: Number(purchasePrice) })
+                    .eq('product_id', id)
+                    .select();
+                setSuccessMessage(session, 'Updated successfully!');
+            }
+            break;
+        }
+        case 'variant': {
+            console.log('Variant');
+            if (intent === 'save') {
+                const size = formData.get('size');
+                const colour = formData.get('colour');
+
+                const fieldErrors = {
+                    colour: validateText(colour)
+                };
+
+                if (Object.values(fieldErrors).some(Boolean)) {
+                    return badRequest({ fieldErrors });
+                }
+
+                const { data: variation, error: variationError } = await supabaseClient
+                    .from('Variations')
+                    .select('id')
+                    .eq('product_id', id);
+
+                console.log({ variation });
+
+                const values = [size, colour];
+
+                const optionValues = await Promise.all(variation.map(async (option, index) => {
+                    const { data: variationOption, error: optionError } = await supabaseClient
+                        .from('Variation_options')
+                        .update({ value: values[index] })
+                        .eq('variation_id', option.id)
+                        .select();
+                    return { variationOption, optionError };
+                }));
+
+                setSuccessMessage(session, 'Updated successfully!');
+            }
+            break;
+        }
+    }
+
+    const allHeaders = { ...Object.fromEntries(headers.entries()), "Set-Cookie": await sessionStorage.commitSession(session) };
+
+    return json({ ok: true }, {
+        headers: allHeaders
+    });
+}
+
 export default function Product() {
     const { product, categories } = useLoaderData();
     console.log({ product });
@@ -25,16 +171,14 @@ export default function Product() {
     const navigation = useNavigation();
     const isSubmitting = navigation.state === 'submitting';
     return (
-        <div className="lg:max-w-4xl 2xl:max-w-6xl">
-            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-                <h1 className="order-2 md:order-1 font-semibold text-xl">Edit product</h1>
-                <Link to="/dashboard/products/new" className="bg-brand-orange text-white px-4 py-2 rounded flex gap-2 order-1 md:order-2 max-w-fit"><PlusIcon /> Add another product</Link>
-            </div>
-            <Form method="post" className="mt-4">
-                <fieldset className="space-y-4">
-                    <div className="border border-slate-200 p-6 rounded">
-                        <p className="font-semibold">Product info</p>
-                        <div className="grid md:grid-cols-2 gap-4 mt-2">
+        <div className="lg:max-w-4xl 2xl:max-w-6xl mt-8 md:mt-10">
+            <h1 className="font-semibold font-heading text-2xl lg:text-3xl">{product.data.Products.title}</h1>
+            <h2 className="order-2 md:order-1 font-medium text-lg text-gray-600 mt-4">Edit product</h2>
+            <Form method="post" className="mt-4 border border-slate-200 p-6 rounded">
+                <fieldset>
+                    <legend className="font-semibold">Product info</legend>
+                    <div className="mt-2">
+                        <div className="grid md:grid-cols-2 gap-4">
                             <FormSpacer>
                                 <Label htmlFor="title">Title</Label>
                                 <Input
@@ -42,6 +186,7 @@ export default function Product() {
                                     name='title'
                                     id='title'
                                     defaultValue={product.data.Products.title}
+                                    className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.title ? 'border border-red-500' : ''}`}
                                 />
                                 {actionData?.fieldErrors?.title
                                     ? <p className="text-red-500 text-sm">{actionData.fieldErrors.title}</p>
@@ -54,6 +199,7 @@ export default function Product() {
                                     name='description'
                                     id='description'
                                     defaultValue={product.data.Products.description}
+                                    className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.description ? 'border border-red-500' : ''}`}
                                 />
                                 {actionData?.fieldErrors?.description
                                     ? <p className="text-red-500 text-sm">{actionData.fieldErrors.description}</p>
@@ -62,7 +208,12 @@ export default function Product() {
                             </FormSpacer>
                             <FormSpacer>
                                 <Label htmlFor='category'>Category</Label>
-                                <Select name="category" id="category" defaultValue={product.data.Products.Categories.title}>
+                                <Select
+                                    name="category"
+                                    id="category"
+                                    defaultValue={product.data.Products.Categories.title}
+                                    className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.category ? 'border border-red-500' : ''}`}
+                                >
                                     <SelectTrigger className="w-[180px]">
                                         <SelectValue placeholder="--Select category--" />
                                     </SelectTrigger>
@@ -80,6 +231,7 @@ export default function Product() {
                                     name='quantity'
                                     id='quantity'
                                     defaultValue={product.data.quantity}
+                                    className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.quantity ? 'border border-red-500' : ''}`}
                                 />
                                 {actionData?.fieldErrors?.quantity
                                     ? <p className="text-red-500 text-sm">{actionData.fieldErrors.quantity}</p>
@@ -87,10 +239,46 @@ export default function Product() {
                                 }
                             </FormSpacer>
                         </div>
+                        <div className="flex gap-2 justify-end mt-4">
+                            <input type="hidden" name="_action" value="product" />
+                            <Button
+                                variant="outline"
+                                name="intent"
+                                value="cancel"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="bg-brand-orange"
+                                name="intent"
+                                value="save"
+                            >
+                                {(isSubmitting && navigation.formData.get('_action') === 'product' && navigation.formData.get('intent') === 'save') ? 'Saving...' : 'Save'}
+                            </Button>
+                        </div>
                     </div>
-                    <div className="border border-slate-200 p-6 rounded">
-                        <p className="font-semibold">Pricing (Kshs)</p>
-                        <div className="grid md:grid-cols-2 gap-4 mt-2">
+                </fieldset>
+            </Form>
+
+            <div className="border border-slate-200 p-6 rounded mt-4">
+                <p>Images</p>
+                <div className="mt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {product.data.images.map((image, index) => (
+                        <DeletableImage
+                            key={index}
+                            imageSrc={image.image_src}
+                            id={image.id}
+                        />
+                    ))}
+                </div>
+            </div>
+
+            <Form method="post" className="mt-4 border border-slate-200 p-6 rounded">
+                <fieldset>
+                    <legend className="font-semibold">Pricing (Kshs)</legend>
+                    <div className="mt-2">
+                        <div className="grid md:grid-cols-2 gap-4">
                             <FormSpacer>
                                 <Label htmlFor='price'>Price</Label>
                                 <Input
@@ -99,6 +287,7 @@ export default function Product() {
                                     id='price'
                                     defaultValue={product.data.price}
                                     min="1"
+                                    className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.price ? 'border border-red-500' : ''}`}
                                 />
                                 {actionData?.fieldErrors?.price
                                     ? <p className="text-red-500 text-sm">{actionData.fieldErrors.price}</p>
@@ -113,6 +302,7 @@ export default function Product() {
                                     id='compare'
                                     defaultValue={product.data.compare_price}
                                     min="1"
+                                    className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.comparePrice ? 'border border-red-500' : ''}`}
                                 />
                                 {actionData?.fieldErrors?.comparePrice
                                     ? <p className="text-red-500 text-sm">{actionData.fieldErrors.comparePrice}</p>
@@ -127,6 +317,7 @@ export default function Product() {
                                     id='purchase-price'
                                     defaultValue={product.data.purchase_price}
                                     min="1"
+                                    className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.purchasePrice ? 'border border-red-500' : ''}`}
                                 />
                                 {actionData?.fieldErrors?.purchasePrice
                                     ? <p className="text-red-500 text-sm">{actionData.fieldErrors.purchasePrice}</p>
@@ -134,11 +325,34 @@ export default function Product() {
                                 }
                             </FormSpacer>
                         </div>
+                        <div className="flex gap-2 justify-end mt-4">
+                            <input type="hidden" name="_action" value="pricing" />
+                            <Button
+                                variant="outline"
+                                name="intent"
+                                value="cancel"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="bg-brand-orange"
+                                name="intent"
+                                value="save"
+                            >
+                                {(isSubmitting && navigation.formData.get('_action') === 'pricing' && navigation.formData.get('intent') === 'save') ? 'Saving...' : 'Save'}
+                            </Button>
+                        </div>
                         {/* TODO: Add cost per item, profit & margin */}
                     </div>
+                </fieldset>
 
-                    <div className="border border-slate-200 p-6 rounded space-y-4">
-                        <p className="font-semibold">Variants</p>
+            </Form>
+
+            <Form method="post" className="mt-4 border border-slate-200 rounded p-6">
+                <fieldset>
+                    <legend className="font-semibold">Variants</legend>
+                    <div className="mt-2">
                         <div className="grid md:grid-cols-2 gap-4">
                             <FormSpacer>
                                 <Label htmlFor='size'>Size</Label>
@@ -146,6 +360,7 @@ export default function Product() {
                                     name="size"
                                     id="size"
                                     defaultValue={product.data.variation.variationValues[0][0].value}
+                                    className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.size ? 'border border-red-500' : ''}`}
                                 >
                                     <SelectTrigger className="w-[180px]">
                                         <SelectValue placeholder="--Select size--" />
@@ -167,6 +382,7 @@ export default function Product() {
                                     name='colour'
                                     id='colour'
                                     defaultValue={product.data.variation.variationValues[1][0].value}
+                                    className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.colour ? 'border border-red-500' : ''}`}
                                 />
                                 {actionData?.fieldErrors?.colour
                                     ? <p className="text-red-500 text-sm">{actionData.fieldErrors.colour}</p>
@@ -181,19 +397,47 @@ export default function Product() {
                                 Add size
                             </button> */}
                         </div>
-
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                        <Button variant="outline">Cancel</Button>
-                        <Button
-                            type="submit"
-                            className="bg-brand-orange"
-                        >
-                            {isSubmitting ? 'Saving...' : 'Save'}
-                        </Button>
+                        <div className="flex gap-2 justify-end mt-4">
+                            <input type="hidden" name="_action" value="variant" />
+                            <Button
+                                variant="outline"
+                                name="intent"
+                                value="cancel"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="bg-brand-orange"
+                                name="intent"
+                                value="save"
+                            >
+                                {(isSubmitting && navigation.formData.get('_action') === 'variant' && navigation.formData.get('intent') === 'save') ? 'Saving...' : 'Save'}
+                            </Button>
+                        </div>
                     </div>
                 </fieldset>
             </Form>
+
+        </div>
+    );
+}
+
+function DeletableImage({ imageSrc, id }) {
+    const fetcher = useFetcher();
+    const isSubmitting = fetcher.state !== 'idle';
+
+    return (
+        <div className={`w-full h-full relative rounded ${isSubmitting ? 'opacity-50' : ''}`}>
+            <img src={imageSrc} alt="" className="w-full h-full object-cover" />
+            <fetcher.Form method="post" className="absolute right-2 top-2 text-red-500 hover:text-red-700 transition ease-in-out duration-300">
+                <input type="hidden" name="imageId" value={id} />
+                <input type="hidden" name="imageSrc" value={imageSrc} />
+                <button type="submit">
+                    <TrashIcon />
+                </button>
+            </fetcher.Form>
+            {/* <TrashIcon className="absolute right-2 top-2 text-red-500" /> */}
         </div>
     );
 }

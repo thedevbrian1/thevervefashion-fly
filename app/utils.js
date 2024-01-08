@@ -112,8 +112,14 @@ export function validateText(text) {
 }
 
 export function validatePrice(price) {
-    if (typeof price !== "string") {
+    if (typeof price !== "number" || price <= 0) {
         return 'Invalid price';
+    }
+}
+
+export function validateQuantity(quantity) {
+    if (typeof quantity !== "string" || Number(quantity) < 0) {
+        return 'Invalid quantity';
     }
 }
 
