@@ -1,9 +1,10 @@
 import { json, redirect } from "@remix-run/node";
-import { Form, Link, isRouteErrorResponse, useRouteError } from "@remix-run/react";
+import { Form, Link, isRouteErrorResponse, useLoaderData, useRouteError } from "@remix-run/react";
 import { ArrowRightIcon, ErrorIllustration, MpesaIcon } from "~/components/Icon";
 import ProductCard from "~/components/ProductCard";
+import { getProducts } from "~/models/product.server";
 import { createClient } from "~/supabase.server";
-import { featuredProducts } from "~/utils";
+// import { featuredProducts } from "~/utils";
 
 export const meta = () => {
   return [
@@ -16,14 +17,29 @@ export async function loader({ request }) {
   const { supabaseClient, headers } = createClient(request);
 
   const sbSession = await supabaseClient.auth.getSession();
-  // console.log({ user: sbSession.data.session.user });
-
   const user = sbSession?.data?.session?.user;
-  if (user) {
-    throw redirect('/dashboard', headers);
+  // if (user) {
+  //   throw redirect('/dashboard', headers);
+  // }
+
+  const { data, error, headers: productHeaders } = await getProducts(request);
+  if (error) {
+    throw new Error(error);
   }
 
-  return json({ ok: true }, headers);
+  const products = data.product.map(product => {
+    let imageSrc = data.image.find(image => image.product_id === product.product_id)
+    let details = {
+      title: product.Products.title,
+      price: product.price,
+      comparePrice: product.compare_price,
+      imageSrc: imageSrc.image_src,
+      productId: product.product_id
+    };
+    return details;
+  });
+
+  return json({ products }, headers);
 }
 
 export default function Index() {
@@ -139,63 +155,66 @@ function Hero() {
 }
 
 function NewArrivals() {
-  const newArrivals = [
-    {
-      imageSrc: '/loungewear.jpeg',
-      name: 'Dress',
-      rating: '4.5',
-      price: '3999',
-      oldPrice: '4999',
-      id: 1
-    },
-    {
-      imageSrc: '/corset-top.jpg',
-      name: 'Corset top',
-      rating: '4.5',
-      price: '3999',
-      oldPrice: '4999',
-      id: 2
-    },
-    {
-      imageSrc: '/two-piece-set.jpg',
-      name: 'Two piece set',
-      rating: '4.5',
-      price: '3999',
-      oldPrice: '4999',
-      id: 3
-    },
-    {
-      imageSrc: '/loungewear.jpeg',
-      name: 'Dress',
-      rating: '4.5',
-      price: '3999',
-      oldPrice: '4999',
-      id: 4
-    },
-    {
-      imageSrc: '/loungewear.jpeg',
-      name: 'Dress',
-      rating: '4.5',
-      price: '3999',
-      oldPrice: '4999',
-      id: 5
-    },
-  ]
+  // const newArrivals = [
+  //   {
+  //     imageSrc: '/loungewear.jpeg',
+  //     name: 'Dress',
+  //     rating: '4.5',
+  //     price: '3999',
+  //     oldPrice: '4999',
+  //     id: 1
+  //   },
+  //   {
+  //     imageSrc: '/corset-top.jpg',
+  //     name: 'Corset top',
+  //     rating: '4.5',
+  //     price: '3999',
+  //     oldPrice: '4999',
+  //     id: 2
+  //   },
+  //   {
+  //     imageSrc: '/two-piece-set.jpg',
+  //     name: 'Two piece set',
+  //     rating: '4.5',
+  //     price: '3999',
+  //     oldPrice: '4999',
+  //     id: 3
+  //   },
+  //   {
+  //     imageSrc: '/loungewear.jpeg',
+  //     name: 'Dress',
+  //     rating: '4.5',
+  //     price: '3999',
+  //     oldPrice: '4999',
+  //     id: 4
+  //   },
+  //   {
+  //     imageSrc: '/loungewear.jpeg',
+  //     name: 'Dress',
+  //     rating: '4.5',
+  //     price: '3999',
+  //     oldPrice: '4999',
+  //     id: 5
+  //   },
+  // ]
+  const { products } = useLoaderData();
+  const newArrivals = products;
   return (
     <div className="px-4 lg:max-w-7xl mx-auto mt-20 xl:mt-32">
       <h2 className="font-heading text-2xl lg:text-3xl text-center">New arrivals</h2>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-12">
+        {/* TODO: Get new arrivals from db */}
         {newArrivals.map(arrival => (
-          <Link to={`/products/${arrival.id}`} key={arrival.id}>
+          <Link to={`/products/${arrival.productId}`} key={arrival.productId}>
             <ProductCard imageSrc={arrival.imageSrc}>
               <div className="p-4 space-y-2">
                 <div className="flex justify-between">
-                  <h3 className="text-xl">{arrival.name}</h3>
-                  <span>{arrival.rating}</span>
+                  <h3 className="text-xl">{arrival.title}</h3>
+                  {/* <span>{arrival.rating}</span> */}
                 </div>
-                <p className="flex gap-4 items-center"><s className="text-gray-400 text-sm">Ksh {arrival.oldPrice}</s> <span>Ksh {arrival.price}</span></p>
+                <p className="flex gap-4 items-center"><s className="text-gray-400 text-sm">Ksh {arrival.comparePrice}</s> <span>Ksh {arrival.price}</span></p>
                 <Form method="post">
-                  <input type="hidden" name="id" value={arrival.id} />
+                  <input type="hidden" name="id" value={arrival.productId} />
                   <button
                     type="submit"
                     className="bg-brand-orange text-white px-4 py-2 rounded"
@@ -213,21 +232,24 @@ function NewArrivals() {
 }
 
 function FeaturedProducts() {
+  const { products } = useLoaderData();
+  const featuredProducts = products;
   return (
     <div className="px-4 lg:max-w-7xl mx-auto mt-20 xl:mt-32">
       <h2 className="font-heading text-2xl lg:text-3xl text-center">Featured products</h2>
+      {/* TODO: Get featured products from db */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-12">
         {featuredProducts.map(product => (
-          <Link to={`/products/${product.id}`} key={product.id}>
+          <Link to={`/products/${product.productId}`} key={product.productId}>
             <ProductCard imageSrc={product.imageSrc}>
               <div className="p-4 space-y-2">
                 <div className="flex justify-between">
-                  <h3 className="text-xl">{product.name}</h3>
-                  <span>{product.rating}</span>
+                  <h3 className="text-xl">{product.title}</h3>
+                  {/* <span>{product.rating}</span> */}
                 </div>
-                <p className="flex gap-4 items-center"><s className="text-gray-400 text-sm">Ksh {product.oldPrice}</s> <span>Ksh {product.price}</span></p>
+                <p className="flex gap-4 items-center"><s className="text-gray-400 text-sm">Ksh {product.comparePrice}</s> <span>Ksh {product.price}</span></p>
                 <Form method="post">
-                  <input type="hidden" name="id" value={product.id} />
+                  <input type="hidden" name="id" value={product.productId} />
                   <button
                     type="submit"
                     className="bg-brand-orange text-white px-4 py-2 rounded"
@@ -264,32 +286,32 @@ function Categories() {
   const categories = [
     {
       name: 'Dresses',
-      path: '/category/dresses',
+      path: '/category/dress',
       imgSrc: '/two-piece-set.jpg'
     },
     {
       name: 'Corset tops',
-      path: '/category/dresses',
+      path: '/category/corset-top',
       imgSrc: '/corset-top.jpg'
     },
     {
       name: 'Lounge wear',
-      path: '/category/dresses',
+      path: '/category/loungewear',
       imgSrc: '/loungewear.jpeg'
     },
     {
       name: 'Two piece set',
-      path: '/category/dresses',
+      path: '/category/two-piece-set',
       imgSrc: '/two-piece-set.jpg'
     },
     {
       name: 'Basics',
-      path: '/category/dresses',
+      path: '/category/basic',
       imgSrc: '/loungewear.jpeg'
     },
     {
       name: 'Accessories',
-      path: '/category/dresses',
+      path: '/category/accessory',
       imgSrc: '/two-piece-set.jpg'
     }
   ];
@@ -311,7 +333,7 @@ function Categories() {
         ))}
       </div>
       <div className="flex justify-center mt-8">
-        <Link to="/" className="flex gap-4 hover:text-brand-orange hover:underline transition ease-in-out duration-300">
+        <Link to="/products" className="flex gap-4 hover:text-brand-orange hover:underline transition ease-in-out duration-300">
           View more <ArrowRightIcon />
         </Link>
       </div>

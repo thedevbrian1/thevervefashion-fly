@@ -7,19 +7,19 @@ export const navLinks = [
     },
     {
         text: 'Dresses',
-        path: '/category/dresses'
+        path: '/category/dress'
     },
     {
         text: 'Lounge wear',
-        path: '/category/lounge-wear'
+        path: '/category/loungewear'
     },
     {
         text: 'Accessories',
-        path: '/category/accessories'
+        path: '/category/accessory'
     },
     {
         text: 'Corset tops',
-        path: '/category/corset-tops'
+        path: '/category/corset-top'
     },
     {
         text: 'Contacts',

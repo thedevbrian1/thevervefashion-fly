@@ -101,23 +101,23 @@ export default function App() {
   const footerProducts = [
     {
       name: 'Two piece sets',
-      path: '/'
+      path: '/category/two-piece-set'
     },
     {
       name: 'Basics',
-      path: '/'
+      path: '/category/basic'
     },
     {
       name: 'Dresses',
-      path: '/'
+      path: '/category/dress'
     },
     {
       name: 'Accessories',
-      path: '/'
+      path: '/category/accessory'
     },
     {
       name: 'Lounge wear',
-      path: '/'
+      path: '/category/loungewear'
     }
   ];
 
@@ -201,7 +201,7 @@ export default function App() {
               <ul className="space-y-1 mt-2">
                 {footerLinks.map((link, index) => (
                   <li key={index}>
-                    <NavLink to={link.path}>
+                    <NavLink to={link.path} prefetch="intent">
                       {link.name}
                     </NavLink>
                   </li>
@@ -213,7 +213,7 @@ export default function App() {
               <ul className="space-y-1 mt-2">
                 {footerProducts.map((product, index) => (
                   <li key={index}>
-                    <Link to={product.path}>
+                    <Link to={product.path} prefetch="intent">
                       {product.name}
                     </Link>
                   </li>
