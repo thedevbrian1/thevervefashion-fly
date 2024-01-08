@@ -169,7 +169,7 @@ export default function NewProduct() {
         }
     }
     return (
-        <div className="mt-8 lg:mt-10">
+        <div className="mt-8 lg:mt-12">
             <Link to="/dashboard/products" className="flex gap-2 hover:text-brand-orange transition duration-300 ease-in-out">
                 <ArrowLeftIcon /> Back to products
             </Link>

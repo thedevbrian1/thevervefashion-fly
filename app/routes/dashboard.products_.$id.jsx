@@ -36,7 +36,6 @@ export async function action({ request, params }) {
 
     const { supabaseClient, headers } = createClient(request);
 
-    // TODO: Perform the various db updates
     switch (action) {
         case 'product': {
             console.log('product');
@@ -81,6 +80,7 @@ export async function action({ request, params }) {
             break;
         }
         case 'image': {
+            // TODO: Delete image 
             const publicId = getCloudinaryPublicId(imageSrc);
             // Delete image from db
             const { data, error, headers } = await deletemage(request, Number(imageId));
@@ -171,7 +171,7 @@ export default function Product() {
     const navigation = useNavigation();
     const isSubmitting = navigation.state === 'submitting';
     return (
-        <div className="lg:max-w-4xl 2xl:max-w-6xl mt-8 md:mt-10">
+        <div className="lg:max-w-4xl 2xl:max-w-6xl mt-8 md:mt-12">
             <h1 className="font-semibold font-heading text-2xl lg:text-3xl">{product.data.Products.title}</h1>
             <h2 className="order-2 md:order-1 font-medium text-lg text-gray-600 mt-4">Edit product</h2>
             <Form method="post" className="mt-4 border border-slate-200 p-6 rounded">

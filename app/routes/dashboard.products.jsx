@@ -10,7 +10,7 @@ export default function DashboardProducts() {
     const { data } = useLoaderData();
     console.log({ data });
     return (
-        <div className="mt-8 md:mt-10">
+        <div className="mt-8 md:mt-12">
             <h1 className="font-semibold font-heading text-2xl lg:text-3xl">Products</h1>
             <div className="mt-4 grid am:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {data.product.map((product, index) => (

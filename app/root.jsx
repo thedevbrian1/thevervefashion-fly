@@ -171,7 +171,7 @@ export default function App() {
         <div ref={interceptRef}></div>
         <header
           ref={headerRef}
-          className={`sticky top-0 w-full z-20 transition duration-500 ease-in-out py-4 px-4 lg:px-10 ${isIntersecting ? 'bg-transparent' : 'bg-white'} `}
+          className={`sticky top-0 w-full z-20 transition duration-500 ease-in-out py-4 px-4 lg:px-10 shadow ${isIntersecting ? 'bg-transparent' : 'bg-white'} `}
         >
           <Nav navLinks={navLinks} isLoggedIn={isLoggedIn} />
           {/* TODO: Prevent content shift before search bar is rendered */}
@@ -181,13 +181,13 @@ export default function App() {
 
               {(location.pathname === '/' || location.pathname === '/about' || location.pathname === '/contact')
                 ? !isIntersecting
-                  ? <SearchBox />
+                  ? <SearchBox placeholder="Search products..." />
                   : null
                 : location.pathname.includes('/dashboard')
                   ? null
                   : (location.pathname === '/login' || location.pathname === '/signup')
                     ? null
-                    : <SearchBox />
+                    : <SearchBox placeholder="Search products..." />
               }
             </InstantSearch>
           </div>
