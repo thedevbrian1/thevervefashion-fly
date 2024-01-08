@@ -1,4 +1,5 @@
-import { Form, Link, isRouteErrorResponse, useRouteError } from "@remix-run/react";
+import { json } from "@remix-run/node";
+import { Form, Link, isRouteErrorResponse, useLoaderData, useRouteError } from "@remix-run/react";
 import { ErrorIllustration } from "~/components/Icon";
 import Label from "~/components/Label";
 // import { Input } from "~/components/ui/input";
@@ -9,29 +10,44 @@ import {
     SelectTrigger,
     SelectValue,
 } from "~/components/ui/select";
+import { getProductById } from "~/models/product.server";
 
+
+export async function loader({ request, params }) {
+    const id = Number(params.id);
+    const { data: product, error, headers } = await getProductById(request, id);
+    if (error) {
+        throw new Error(error);
+    }
+
+    return json({ product }, {
+        headers
+    });
+}
 
 export async function action({ request }) {
     return null;
 }
 export default function Product() {
     const colours = ['Black', 'Red', 'Green'];
-
+    const { product } = useLoaderData();
+    console.log({ product });
     return (
         <main className="mt-16 px-4 lg:px-0 lg:max-w-5xl mx-auto grid lg:grid-cols-2 gap-4 lg:gap-8">
             <div>
                 {/* Images */}
-                <img src="/corset-top.jpg" alt="" className="aspect-[4/3] object-cover" />
+                <img src={product.images[0].image_src} alt="" className="aspect-[4/3] object-cover" />
             </div>
             <div>
                 {/* Description */}
-                <h1 className="text-2xl lg:text-3xl">Maxi dress</h1>
-                <p className="text-brand-orange mt-2">Ksh 3999</p>
+                <h1 className="text-2xl lg:text-3xl">{product.Products.title}</h1>
+                <p className="text-brand-orange mt-2">Ksh {product.price}</p>
                 <Form method="post" className="space-y-4 mt-6">
                     <fieldset>
                         <legend className="text-sm uppercase">
                             Size
                         </legend>
+                        {/* TODO: Render the sizes available in the db */}
                         <div className="flex gap-4 mt-1">
                             <div className="flex gap-1">
                                 <input type="radio" name="size" id="xs" value="xs" />
@@ -65,6 +81,7 @@ export default function Product() {
                     </div>
                     <div className="flex flex-col gap-1">
                         <Label htmlFor="colour">Colour</Label>
+                        {/* TODO: Render the colours in the db */}
                         <Select>
                             <SelectTrigger className="w-[180px] mt-1">
                                 <SelectValue placeholder="--Select colour--" />
@@ -77,12 +94,15 @@ export default function Product() {
                         </Select>
 
                     </div>
-                    <button type="submit" className="bg-brand-orange text-white px-8 py-2 rounded">
-                        Add to cart
-                    </button>
+                    {product.quantity > 0
+                        ? <button type="submit" className="bg-brand-orange text-white px-8 py-2 rounded">
+                            Add to cart
+                        </button>
+                        : <p className="bg-red-50 text-red-500 p-4 rounded max-w-fit">Out of stock</p>}
+
                 </Form>
                 <p className="uppercase text-sm mt-8">Description</p>
-                <p className="mt-2">Lorem ipsum dolor sit amet consectetur adipisicing elit. Reprehenderit, eius reiciendis ab esse maiores, doloribus officia amet facere laudantium sint nemo id atque impedit quidem quia dignissimos aspernatur numquam a qui rerum, consectetur labore! Dicta sint assumenda soluta odio cum!</p>
+                <p className="mt-2">{product.Products.description}</p>
             </div>
         </main>
     );
