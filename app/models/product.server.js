@@ -1,6 +1,7 @@
 import { createClient } from "~/supabase.server";
 import { getVariationById } from "./variation.server";
 import { getImage, getImages } from "./image.server";
+import { getCategoryId } from "./category.server";
 
 export async function addProduct(request, title, description, categoryId) {
     const { supabaseClient, headers } = createClient(request);
@@ -27,7 +28,7 @@ export async function getProductById(request, id) {
     ] = await Promise.all([
         supabaseClient
             .from('Product_item')
-            .select(`quantity,price,compare_price,purchase_price, Products(title,description,Categories(title))`)
+            .select(`quantity,price,compare_price,purchase_price,product_id, Products(title,description,Categories(title))`)
             .eq('product_id', Number(id)),
         getVariationById(request, Number(id)),
         getImage(request, Number(id))
@@ -53,4 +54,21 @@ export async function getProducts(request) {
     ]);
     const data = { product, image };
     return { data, error: productError, headers };
+}
+
+export async function getCategorizedProducts(request, category) {
+    const { supabaseClient, headers } = createClient(request);
+    const { data: categories, error: categoryError } = await getCategoryId(request, category);
+    const categoryId = categories[0].id;
+
+    const { data: productIds, error: productIdError } = await supabaseClient
+        .from('Products')
+        .select('id')
+        .eq('category_id', categoryId);
+
+    const products = await Promise.all(productIds.map(async (productId) => {
+        const { data, error } = await getProductById(request, productId.id);
+        return { data, error };
+    }));
+    return { data: products, headers };
 }
