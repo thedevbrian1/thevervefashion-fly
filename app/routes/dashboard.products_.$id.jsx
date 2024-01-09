@@ -1,5 +1,6 @@
-import { json } from "@remix-run/node";
-import { Form, Link, useActionData, useFetcher, useLoaderData, useNavigation } from "@remix-run/react";
+import { json, unstable_composeUploadHandlers, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node";
+import { Form, Link, useActionData, useFetcher, useLoaderData, useNavigation, useParams } from "@remix-run/react";
+import { useState } from "react";
 // import { TrashIcon } from "lucide-react";
 import FormSpacer from "~/components/FormSpacer";
 import { PlusIcon, TrashIcon } from "~/components/Icon";
@@ -9,9 +10,9 @@ import { Label } from "~/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
 import { getCategories, getCategoryId } from "~/models/category.server";
-import { deletemage } from "~/models/image.server";
+import { addImage, deletemage } from "~/models/image.server";
 import { getProductById } from "~/models/product.server";
-import { deleteCloudinaryImage, getCloudinaryPublicId } from "~/services/cloudinary.server";
+import { deleteCloudinaryImage, getCloudinaryPublicId, uploadImage } from "~/services/cloudinary.server";
 import { getSession, sessionStorage, setSuccessMessage } from "~/session.server";
 import { createClient } from "~/supabase.server";
 import { badRequest, validatePrice, validateQuantity, validateText } from "~/utils";
@@ -26,9 +27,25 @@ export async function loader({ request, params }) {
 
 export async function action({ request, params }) {
     const id = Number(params.id);
+
+    const uploadHandler = unstable_composeUploadHandlers(
+        async ({ name, data }) => {
+            if (name !== "image") {
+                return undefined;
+            }
+            // TODO: Don't upload image if there is a validation error
+            const uploadedImage = await uploadImage(data);
+            // console.log({ uploadedImage });
+            return uploadedImage.secure_url;
+            // return null;
+        },
+        unstable_createMemoryUploadHandler()
+    );
+
+    const formData = await unstable_parseMultipartFormData(request, uploadHandler);
     const session = await getSession(request);
 
-    const formData = await request.formData();
+    // const formData = await request.formData();
     const action = formData.get('_action');
     const intent = formData.get('intent');
     const imageId = formData.get('imageId');
@@ -79,7 +96,7 @@ export async function action({ request, params }) {
             }
             break;
         }
-        case 'image': {
+        case 'deleteIimage': {
             // TODO: Delete image 
             const publicId = getCloudinaryPublicId(imageSrc);
             // Delete image from db
@@ -89,6 +106,18 @@ export async function action({ request, params }) {
             // Delete image from cloudinary
             const deleted = await deleteCloudinaryImage(publicId);
             console.log({ deleted });
+            setSuccessMessage(session, 'Deleted successfully!');
+            break;
+        }
+        case 'addImage': {
+            const image = formData.getAll('image');
+
+            const imageResponse = await Promise.all(image.map(async (image) => {
+                const { data, error, headers } = await addImage(request, image, id);
+                return { data, error, headers };
+            }));
+
+            setSuccessMessage(session, 'Added successfully!');
             break;
         }
         case 'pricing': {
@@ -167,9 +196,32 @@ export default function Product() {
     console.log({ product });
     console.log(product.data.variation.variationValues[0][0].value);
 
+    const params = useParams();
+    const productId = Number(params.id);
+
     const actionData = useActionData();
     const navigation = useNavigation();
+    const [images, setImages] = useState([]);
+
     const isSubmitting = navigation.state === 'submitting';
+
+    function handleImageChange(event) {
+        const files = event.target.files;
+        let imagesArray = [...images];
+
+        console.log({ files });
+
+        for (let i = 0; i < files.length; i++) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                imagesArray.push(reader.result);
+                if (imagesArray.length === files.length) {
+                    setImages([...imagesArray]);
+                }
+            };
+            reader.readAsDataURL(files[i]);
+        }
+    }
     return (
         <div className="lg:max-w-4xl 2xl:max-w-6xl mt-8 md:mt-12">
             <h1 className="font-semibold font-heading text-2xl lg:text-3xl">{product.data.Products.title}</h1>
@@ -262,16 +314,86 @@ export default function Product() {
             </Form>
 
             <div className="border border-slate-200 p-6 rounded mt-4">
-                <p>Images</p>
-                <div className="mt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {product.data.images.map((image, index) => (
-                        <DeletableImage
-                            key={index}
-                            imageSrc={image.image_src}
-                            id={image.id}
-                        />
-                    ))}
+                <p className="font-semibold">Images</p>
+                {/* TODO: Add other images */}
+                {/* TODO: Delete image(s) */}
+                {
+                    product.data.images.length === 0
+                        ? (
+                            <div>
+                                <p className="mt-2 text-gray-500 italic">No images</p>
+                            </div>
+                        )
+                        : (
+                            <div className="mt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                {product.data.images.map((image, index) => (
+                                    <DeletableImage
+                                        key={index}
+                                        imageSrc={image.image_src}
+                                        id={image.id}
+                                    />
+                                ))}
+                            </div>
+                        )
+                }
+                <div>
+                    <Form method="post" className="mt-2" id="add-image" encType="multipart/form-data">
+                        <FormSpacer>
+                            <Label htmlFor='image' className="font-semibold">Add image(s)</Label>
+                            <Input
+                                type='file'
+                                name='image'
+                                id='image'
+                                accept='image/png, image/jpg, image/jpeg'
+                                onChange={handleImageChange}
+                                multiple
+                                required
+                                className="file:py-2 file:px-4 file:rounded-full file:bg-orange-50 file:text-brand-orange hover:file:bg-orange-100"
+                            />
+                            <input type="hidden" name="_action" value="addImage" />
+                            {/* <input type="hidden" name="productId" value={productId} /> */}
+                        </FormSpacer>
+                    </Form>
+                    <div>
+                        {/* FIXME: Don't show selected images after it has been uploaded */}
+                        {images.length > 0 && (
+                            <div className="mt-2">
+                                <h3 className="text-gray-800">Selected images:</h3>
+                                <div className="flex gap-2 flex-wrap mt-2">
+                                    {images.map((image, index) => (
+                                        <div className="w-32 h-32" key={index}>
+                                            <img
+                                                src={image}
+                                                alt={`Uploaded ${index}`}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex gap-2 justify-end mt-4">
+                        <Button
+                            variant="outline"
+                            name="intent"
+                            value="cancel"
+                            form="add-image"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            className="bg-brand-orange"
+                            name="intent"
+                            value="save"
+                            form="add-image"
+                        >
+                            {(isSubmitting && navigation.formData.get('_action') === 'addImage' && navigation.formData.get('intent') === 'save') ? 'Saving...' : 'Save'}
+                        </Button>
+                    </div>
                 </div>
+
             </div>
 
             <Form method="post" className="mt-4 border border-slate-200 p-6 rounded">
@@ -352,6 +474,7 @@ export default function Product() {
             <Form method="post" className="mt-4 border border-slate-200 rounded p-6">
                 <fieldset>
                     <legend className="font-semibold">Variants</legend>
+                    {/* TODO: Add variants */}
                     <div className="mt-2">
                         <div className="grid md:grid-cols-2 gap-4">
                             <FormSpacer>
@@ -433,7 +556,7 @@ function DeletableImage({ imageSrc, id }) {
             <fetcher.Form method="post" className="absolute right-2 top-2 text-red-500 hover:text-red-700 transition ease-in-out duration-300">
                 <input type="hidden" name="imageId" value={id} />
                 <input type="hidden" name="imageSrc" value={imageSrc} />
-                <button type="submit">
+                <button type="submit" name="_action" value="deleteImage">
                     <TrashIcon />
                 </button>
             </fetcher.Form>
