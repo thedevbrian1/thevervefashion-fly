@@ -1,4 +1,5 @@
 import { json } from "@remix-run/node";
+import { useState } from "react";
 
 export const navLinks = [
     {
@@ -129,6 +130,35 @@ export function trimValue(value) {
 
 export function trimString(string) {
     return string.trim().split(' ').join('').toLowerCase();
+}
+
+export function useDoubleCheck() {
+    const [doubleCheck, setDoubleCheck] = useState(false);
+
+    function getButtonProps(props) {
+        function onBlur() {
+            setDoubleCheck(false);
+        }
+
+        function onClick(e) {
+            if (!doubleCheck) {
+                e.preventDefault();
+                setDoubleCheck(true);
+            }
+        }
+        return {
+            ...props,
+            onBlur: callAll(onBlur, props?.onBlur),
+            onClick: callAll(onClick, props?.onClick)
+
+        }
+    }
+
+    return { doubleCheck, getButtonProps };
+}
+
+function callAll(...fns) {
+    return (...args) => fns.forEach(fn => fn?.(...args));
 }
 
 export function badRequest(data) {
