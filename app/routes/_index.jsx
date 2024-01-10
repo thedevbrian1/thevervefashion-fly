@@ -202,31 +202,46 @@ function NewArrivals() {
   return (
     <div className="px-4 lg:max-w-7xl mx-auto mt-20 xl:mt-32">
       <h2 className="font-heading text-2xl lg:text-3xl text-center">New arrivals</h2>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-12">
-        {/* TODO: Get new arrivals from db */}
-        {newArrivals.map(arrival => (
-          <Link to={`/products/${arrival.productId}`} key={arrival.productId}>
-            <ProductCard imageSrc={arrival.imageSrc}>
-              <div className="p-4 space-y-2">
-                <div className="flex justify-between">
-                  <h3 className="text-xl">{arrival.title}</h3>
-                  {/* <span>{arrival.rating}</span> */}
-                </div>
-                <p className="flex gap-4 items-center"><s className="text-gray-400 text-sm">Ksh {arrival.comparePrice}</s> <span>Ksh {arrival.price}</span></p>
-                <Form method="post">
-                  <input type="hidden" name="id" value={arrival.productId} />
-                  <button
-                    type="submit"
-                    className="bg-brand-orange text-white px-4 py-2 rounded"
-                  >
-                    Add to cart
-                  </button>
-                </Form>
-              </div>
-            </ProductCard>
-          </Link>
-        ))}
-      </div>
+      {newArrivals.length === 0
+        ? (
+          <div className="w-full h-full grid place-items-center mt-8">
+            <img
+              src="/clipboard.svg"
+              alt="An illustration of an empty clipboard"
+              className="w-20 h-20 lg:w-40 lg:h-40"
+            />
+            <p className="mt-4">No products yet</p>
+          </div>
+        )
+        : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-12">
+            {/* TODO: Get new arrivals from db */}
+            {newArrivals.map(arrival => (
+              <Link to={`/products/${arrival.productId}`} key={arrival.productId}>
+                <ProductCard imageSrc={arrival.imageSrc}>
+                  <div className="p-4 space-y-2">
+                    <div className="flex justify-between">
+                      <h3 className="text-xl">{arrival.title}</h3>
+                      {/* <span>{arrival.rating}</span> */}
+                    </div>
+                    <p className="flex gap-4 items-center"><s className="text-gray-400 text-sm">Ksh {arrival.comparePrice}</s> <span>Ksh {arrival.price}</span></p>
+                    <Form method="post">
+                      <input type="hidden" name="id" value={arrival.productId} />
+                      <button
+                        type="submit"
+                        className="bg-brand-orange text-white px-4 py-2 rounded"
+                      >
+                        Add to cart
+                      </button>
+                    </Form>
+                  </div>
+                </ProductCard>
+              </Link>
+            ))}
+          </div>
+        )
+      }
+
     </div>
   );
 }
@@ -238,30 +253,46 @@ function FeaturedProducts() {
     <div className="px-4 lg:max-w-7xl mx-auto mt-20 xl:mt-32">
       <h2 className="font-heading text-2xl lg:text-3xl text-center">Featured products</h2>
       {/* TODO: Get featured products from db */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-12">
-        {featuredProducts.map(product => (
-          <Link to={`/products/${product.productId}`} key={product.productId}>
-            <ProductCard imageSrc={product.imageSrc}>
-              <div className="p-4 space-y-2">
-                <div className="flex justify-between">
-                  <h3 className="text-xl">{product.title}</h3>
-                  {/* <span>{product.rating}</span> */}
-                </div>
-                <p className="flex gap-4 items-center"><s className="text-gray-400 text-sm">Ksh {product.comparePrice}</s> <span>Ksh {product.price}</span></p>
-                <Form method="post">
-                  <input type="hidden" name="id" value={product.productId} />
-                  <button
-                    type="submit"
-                    className="bg-brand-orange text-white px-4 py-2 rounded"
-                  >
-                    Add to cart
-                  </button>
-                </Form>
-              </div>
-            </ProductCard>
-          </Link>
-        ))}
-      </div>
+
+      {featuredProducts.length === 0
+        ? (
+          <div className="w-full h-full grid place-items-center mt-8">
+            <img
+              src="/clipboard.svg"
+              alt="An illustration of an empty clipboard"
+              className="w-20 h-20 lg:w-40 lg:h-40"
+            />
+            <p className="mt-4">No products yet</p>
+          </div>
+        )
+        : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-12">
+            {featuredProducts.map(product => (
+              <Link to={`/products/${product.productId}`} key={product.productId}>
+                <ProductCard imageSrc={product.imageSrc}>
+                  <div className="p-4 space-y-2">
+                    <div className="flex justify-between">
+                      <h3 className="text-xl">{product.title}</h3>
+                      {/* <span>{product.rating}</span> */}
+                    </div>
+                    <p className="flex gap-4 items-center"><s className="text-gray-400 text-sm">Ksh {product.comparePrice}</s> <span>Ksh {product.price}</span></p>
+                    <Form method="post">
+                      <input type="hidden" name="id" value={product.productId} />
+                      <button
+                        type="submit"
+                        className="bg-brand-orange text-white px-4 py-2 rounded"
+                      >
+                        Add to cart
+                      </button>
+                    </Form>
+                  </div>
+                </ProductCard>
+              </Link>
+            ))}
+          </div>
+        )
+      }
+
     </div>
   );
 }
