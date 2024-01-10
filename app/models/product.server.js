@@ -72,3 +72,12 @@ export async function getCategorizedProducts(request, category) {
     }));
     return { data: products, headers };
 }
+
+export async function deleteProduct(request, id) {
+    const { supabaseClient, headers } = createClient(request);
+    const { error } = await supabaseClient
+        .from('Products')
+        .delete()
+        .eq('id', id);
+    return { error, headers };
+}
