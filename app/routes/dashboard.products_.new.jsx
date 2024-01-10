@@ -69,9 +69,9 @@ export async function action({ request }) {
     const fieldErrors = {
         title: validateText(title),
         description: validateText(description),
-        price: validatePrice(price),
-        comparePrice: validatePrice(comparePrice),
-        purchasePrice: validatePrice(purchasePrice),
+        price: validatePrice(Number(price)),
+        comparePrice: validatePrice(Number(comparePrice)),
+        purchasePrice: validatePrice(Number(purchasePrice)),
         colour: validateText(colour)
     };
 
