@@ -153,7 +153,7 @@ export default function NewProduct() {
 
     function handleImageChange(event) {
         const files = event.target.files;
-        let imagesArray = [...images];
+        let imagesArray = [];
 
         console.log({ files });
 
