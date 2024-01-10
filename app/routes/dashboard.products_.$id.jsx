@@ -212,7 +212,7 @@ export default function Product() {
     const doubleCheckDelete = useDoubleCheck();
     const [images, setImages] = useState([]);
 
-    const isSubmitting = navigation.state === 'submitting';
+    const isSubmitting = navigation.state !== 'idle';
 
     function handleImageChange(event) {
         const files = event.target.files;
@@ -565,7 +565,19 @@ export default function Product() {
                     value="deleteProduct"
                     {...doubleCheckDelete.getButtonProps()}
                 >
-                    {doubleCheckDelete.doubleCheck ? 'Are you sure?' : 'Delete product'}
+                    {doubleCheckDelete.doubleCheck
+                        ? isSubmitting && navigation.formData.get('_action') === 'deleteProduct'
+                            ? 'Deleting...'
+                            : 'Are you sure?'
+                        : 'Delete product'
+                    }
+                    {/* {(isSubmitting && navigation.formData.get('_action') === 'deleteProduct')
+                        ? 'Deleting...'
+                        : doubleCheckDelete.doubleCheck
+                            ? 'Are you sure?'
+                            : 'Delete product'
+
+                    } */}
                 </Button>
             </Form>
         </div>
