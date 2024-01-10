@@ -263,18 +263,6 @@ export default function NewProduct() {
                                                 />
                                             </div>
                                         ))}
-                                        {/* <label htmlFor="add-image" className="border border-dashed w-32 h-32 bg-gray-100 hover:bg-gray-200 grid place-items-center">
-                                            <span className="text-gray-500 text-sm">+ Add image</span>
-                                            <Input
-                                                type='file'
-                                                name='add-image'
-                                                id='add-image'
-                                                accept='image/png, image/jpg, image/jpeg'
-                                                onChange={handleImageChange}
-                                                multiple
-                                                className="hidden"
-                                            />
-                                        </label> */}
                                     </div>
                                 </div>
                             )}

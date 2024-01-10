@@ -1,4 +1,4 @@
-import { json, unstable_composeUploadHandlers, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node";
+import { json, redirect, unstable_composeUploadHandlers, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node";
 import { Form, Link, useActionData, useFetcher, useLoaderData, useNavigation, useParams } from "@remix-run/react";
 import { useState } from "react";
 // import { TrashIcon } from "lucide-react";
@@ -11,11 +11,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 import { Textarea } from "~/components/ui/textarea";
 import { getCategories, getCategoryId } from "~/models/category.server";
 import { addImage, deletemage } from "~/models/image.server";
-import { getProductById } from "~/models/product.server";
+import { deleteProduct, getProductById } from "~/models/product.server";
 import { deleteCloudinaryImage, getCloudinaryPublicId, uploadImage } from "~/services/cloudinary.server";
 import { getSession, sessionStorage, setSuccessMessage } from "~/session.server";
 import { createClient } from "~/supabase.server";
-import { badRequest, validatePrice, validateQuantity, validateText } from "~/utils";
+import { badRequest, useDoubleCheck, validatePrice, validateQuantity, validateText } from "~/utils";
 
 export async function loader({ request, params }) {
     const res = await getCategories(request);
@@ -28,24 +28,24 @@ export async function loader({ request, params }) {
 export async function action({ request, params }) {
     const id = Number(params.id);
 
-    const uploadHandler = unstable_composeUploadHandlers(
-        async ({ name, data }) => {
-            if (name !== "image") {
-                return undefined;
-            }
-            // TODO: Don't upload image if there is a validation error
-            const uploadedImage = await uploadImage(data);
-            // console.log({ uploadedImage });
-            return uploadedImage.secure_url;
-            // return null;
-        },
-        unstable_createMemoryUploadHandler()
-    );
+    // const uploadHandler = unstable_composeUploadHandlers(
+    //     async ({ name, data }) => {
+    //         if (name !== "image") {
+    //             return undefined;
+    //         }
+    //         // TODO: Don't upload image if there is a validation error
+    //         const uploadedImage = await uploadImage(data);
+    //         // console.log({ uploadedImage });
+    //         return uploadedImage.secure_url;
+    //         // return null;
+    //     },
+    //     unstable_createMemoryUploadHandler()
+    // );
 
-    const formData = await unstable_parseMultipartFormData(request, uploadHandler);
+    // const formData = await unstable_parseMultipartFormData(request, uploadHandler);
     const session = await getSession(request);
 
-    // const formData = await request.formData();
+    const formData = await request.formData();
     const action = formData.get('_action');
     const intent = formData.get('intent');
     const imageId = formData.get('imageId');
@@ -96,16 +96,13 @@ export async function action({ request, params }) {
             }
             break;
         }
-        case 'deleteIimage': {
-            // TODO: Delete image 
+        case 'deleteImage': {
             const publicId = getCloudinaryPublicId(imageSrc);
             // Delete image from db
             const { data, error, headers } = await deletemage(request, Number(imageId));
-            console.log({ data });
 
             // Delete image from cloudinary
             const deleted = await deleteCloudinaryImage(publicId);
-            console.log({ deleted });
             setSuccessMessage(session, 'Deleted successfully!');
             break;
         }
@@ -165,8 +162,6 @@ export async function action({ request, params }) {
                     .select('id')
                     .eq('product_id', id);
 
-                console.log({ variation });
-
                 const values = [size, colour];
 
                 const optionValues = await Promise.all(variation.map(async (option, index) => {
@@ -181,6 +176,19 @@ export async function action({ request, params }) {
                 setSuccessMessage(session, 'Updated successfully!');
             }
             break;
+        }
+        case 'deleteProduct': {
+            console.log('Delete product.');
+            const { error, headers } = await deleteProduct(request, id);
+            if (error) {
+                throw new Error(error);
+            }
+            setSuccessMessage(session, 'Deleted successfully!');
+            return redirect('/dashboard/products', {
+                headers: {
+                    ...Object.fromEntries(headers.entries()), "Set-Cookie": await sessionStorage.commitSession(session)
+                }
+            });
         }
     }
 
@@ -201,6 +209,7 @@ export default function Product() {
 
     const actionData = useActionData();
     const navigation = useNavigation();
+    const doubleCheckDelete = useDoubleCheck();
     const [images, setImages] = useState([]);
 
     const isSubmitting = navigation.state === 'submitting';
@@ -315,8 +324,6 @@ export default function Product() {
 
             <div className="border border-slate-200 p-6 rounded mt-4">
                 <p className="font-semibold">Images</p>
-                {/* TODO: Add other images */}
-                {/* TODO: Delete image(s) */}
                 {
                     product.data.images.length === 0
                         ? (
@@ -337,7 +344,14 @@ export default function Product() {
                         )
                 }
                 <div>
-                    <Form method="post" className="mt-2" id="add-image" encType="multipart/form-data">
+                    <Form
+                        preventScrollReset
+                        action="/resources/upload"
+                        method="post"
+                        className="mt-2"
+                        id="add-image"
+                        encType="multipart/form-data"
+                    >
                         <FormSpacer>
                             <Label htmlFor='image' className="font-semibold">Add image(s)</Label>
                             <Input
@@ -350,8 +364,9 @@ export default function Product() {
                                 required
                                 className="file:py-2 file:px-4 file:rounded-full file:bg-orange-50 file:text-brand-orange hover:file:bg-orange-100"
                             />
-                            <input type="hidden" name="_action" value="addImage" />
-                            {/* <input type="hidden" name="productId" value={productId} /> */}
+                            {/* <input type="hidden" name="_action" value="addImage" /> */}
+                            <input type="hidden" name="productId" value={productId} />
+                            <input type="hidden" name="redirectTo" value={`/dashboard/products/${productId}`} />
                         </FormSpacer>
                     </Form>
                     <div>
@@ -389,7 +404,7 @@ export default function Product() {
                             value="save"
                             form="add-image"
                         >
-                            {(isSubmitting && navigation.formData.get('_action') === 'addImage' && navigation.formData.get('intent') === 'save') ? 'Saving...' : 'Save'}
+                            {(isSubmitting && navigation.formAction === '/resources/upload' && navigation.formData.get('intent') === 'save') ? 'Saving...' : 'Save'}
                         </Button>
                     </div>
                 </div>
@@ -542,6 +557,17 @@ export default function Product() {
                 </fieldset>
             </Form>
 
+            <Form method="post" className="mt-4 flex justify-end">
+                <Button
+                    type="submit"
+                    variant="destructive"
+                    name="_action"
+                    value="deleteProduct"
+                    {...doubleCheckDelete.getButtonProps()}
+                >
+                    {doubleCheckDelete.doubleCheck ? 'Are you sure?' : 'Delete product'}
+                </Button>
+            </Form>
         </div>
     );
 }
