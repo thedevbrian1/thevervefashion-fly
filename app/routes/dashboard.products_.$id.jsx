@@ -93,6 +93,8 @@ export async function action({ request, params }) {
                 ]);
 
                 setSuccessMessage(session, "Updated successfully!");
+            } else if (intent === 'cancel') {
+                return { ok: true };
             }
             break;
         }
@@ -140,6 +142,8 @@ export async function action({ request, params }) {
                     .eq('product_id', id)
                     .select();
                 setSuccessMessage(session, 'Updated successfully!');
+            } else if (intent === 'cancel') {
+                return { ok: true };
             }
             break;
         }
@@ -174,6 +178,8 @@ export async function action({ request, params }) {
                 }));
 
                 setSuccessMessage(session, 'Updated successfully!');
+            } else if (intent === 'cancel') {
+                return { ok: true };
             }
             break;
         }
@@ -305,6 +311,7 @@ export default function Product() {
                         <div className="flex gap-2 justify-end mt-4">
                             <input type="hidden" name="_action" value="product" />
                             <Button
+                                type="submit"
                                 variant="outline"
                                 name="intent"
                                 value="cancel"
@@ -398,10 +405,15 @@ export default function Product() {
                     </div>
                     <div className="flex gap-2 justify-end mt-4">
                         <Button
+                            type="button"
                             variant="outline"
                             name="intent"
                             value="cancel"
                             form="add-image"
+                            onClick={() => {
+                                setImages([]);
+                                addImageRef.current.reset();
+                            }}
                         >
                             Cancel
                         </Button>
