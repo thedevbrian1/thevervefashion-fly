@@ -251,11 +251,11 @@ export default function NewProduct() {
 
                         <div>
                             {images.length > 0 && (
-                                <div className="mt-2">
+                                <div className="mt-4">
                                     <h3 className="text-gray-800">Selected images:</h3>
-                                    <div className="flex gap-2 flex-wrap mt-2">
+                                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4  mt-2">
                                         {images.map((image, index) => (
-                                            <div className="w-32 h-32" key={index}>
+                                            <div className="w-full h-full" key={index}>
                                                 <img
                                                     src={image}
                                                     alt={`Uploaded ${index}`}
