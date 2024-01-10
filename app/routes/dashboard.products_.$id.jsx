@@ -1,6 +1,6 @@
 import { json, redirect, unstable_composeUploadHandlers, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node";
 import { Form, Link, useActionData, useFetcher, useLoaderData, useNavigation, useParams } from "@remix-run/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 // import { TrashIcon } from "lucide-react";
 import FormSpacer from "~/components/FormSpacer";
 import { PlusIcon, TrashIcon } from "~/components/Icon";
@@ -211,12 +211,13 @@ export default function Product() {
     const navigation = useNavigation();
     const doubleCheckDelete = useDoubleCheck();
     const [images, setImages] = useState([]);
+    const addImageRef = useRef(null);
 
     const isSubmitting = navigation.state !== 'idle';
 
     function handleImageChange(event) {
         const files = event.target.files;
-        let imagesArray = [...images];
+        let imagesArray = [];
 
         console.log({ files });
 
@@ -233,6 +234,7 @@ export default function Product() {
     }
     return (
         <div className="lg:max-w-4xl 2xl:max-w-6xl mt-8 md:mt-12">
+            {/* TODO: Implement cancel functionality */}
             <h1 className="font-semibold font-heading text-2xl lg:text-3xl">{product.data.Products.title}</h1>
             <h2 className="order-2 md:order-1 font-medium text-lg text-gray-600 mt-4">Edit product</h2>
             <Form method="post" className="mt-4 border border-slate-200 p-6 rounded">
@@ -344,13 +346,20 @@ export default function Product() {
                         )
                 }
                 <div>
+                    {/* TODO: Clear image input after submission */}
                     <Form
-                        preventScrollReset
-                        action="/resources/upload"
                         method="post"
-                        className="mt-2"
+                        action="/resources/upload"
+                        preventScrollReset
                         id="add-image"
                         encType="multipart/form-data"
+                        ref={addImageRef}
+                        className="mt-2"
+                        onSubmit={() => {
+                            setImages([]);
+                            // console.log(event.target);
+                            // addImageRef.current.reset();
+                        }}
                     >
                         <FormSpacer>
                             <Label htmlFor='image' className="font-semibold">Add image(s)</Label>
@@ -370,7 +379,6 @@ export default function Product() {
                         </FormSpacer>
                     </Form>
                     <div>
-                        {/* FIXME: Don't show selected images after it has been uploaded */}
                         {images.length > 0 && (
                             <div className="mt-2">
                                 <h3 className="text-gray-800">Selected images:</h3>
