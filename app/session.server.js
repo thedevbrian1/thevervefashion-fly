@@ -29,3 +29,7 @@ export function setErrorMessage(session, message) {
     session.flash("toastMessage", { message, type: "error" });
 }
 
+export function setWarningMessage(session, message) {
+    session.flash("toastMessage", { message, type: "warning" });
+}
+

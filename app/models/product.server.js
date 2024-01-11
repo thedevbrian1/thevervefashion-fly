@@ -81,3 +81,19 @@ export async function deleteProduct(request, id) {
         .eq('id', id);
     return { error, headers };
 }
+
+export async function getCartProducts(request) {
+    const { supabaseClient, headers } = createClient(request);
+    const [{ data: product, error: productError }, { data: images, error: imageError }] = await Promise.all([
+        supabaseClient.from('Product_item').select('price,product_id,Products(title)'),
+        supabaseClient.from('Images').select('image_src,product_id')
+    ]);
+    if (productError) {
+        throw new Error(productError);
+    }
+    if (imageError) {
+        throw new Error(imageError);
+    }
+    const data = { product, images };
+    return { data, headers };
+}

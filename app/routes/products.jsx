@@ -4,7 +4,9 @@
 import { json } from "@remix-run/node";
 import { Form, Link, useLoaderData } from "@remix-run/react";
 import ProductCard from "~/components/ProductCard";
+import { Button } from "~/components/ui/button";
 import { getProducts } from "~/models/product.server";
+import { getSession, sessionStorage, setSuccessMessage, setWarningMessage } from "~/session.server";
 import { featuredProducts } from "~/utils";
 
 // const index = client.initIndex('demo_ecommerce');
@@ -49,21 +51,40 @@ export async function loader({ request }) {
 }
 
 export async function action({ request }) {
-  const formdata = await request.formdata();
-  const action = formdata.get('_action');
+  const session = await getSession(request);
+  const formData = await request.formData();
+  const action = formData.get('_action');
+  const id = formData.get('id');
 
   switch (action) {
-    case 'upload': {
-      const res = await fetch('https://alg.li/doc-ecommerce.json');
-      await res.json();
-      // const savedObjects = index.saveObjects(products, {
-      //     autoGenerateObjectIDIfNotExist: true
-      // });
+    case 'addToCart': {
+      const cartItems = session.get('cartItems') ?? [];
+      console.log({ cartItems });
+      // Check if item is in cart
+      const productIds = cartItems.map(item => item.id);
+
+      const item = productIds.includes(Number(id));
+      if (item) {
+        setWarningMessage(session, "Item already in cart");
+        break;
+      }
+
+      let cartItem = {
+        id: Number(id),
+        count: 1
+      };
+
+      cartItems.push(cartItem);
+      session.set('cartItems', cartItems);
+      setSuccessMessage(session, 'Added to cart!');
       break;
     }
   }
-
-  return null;
+  return json({ ok: true }, {
+    headers: {
+      "Set-Cookie": await sessionStorage.commitSession(session)
+    }
+  });
 }
 
 export default function Products() {
@@ -100,13 +121,16 @@ export default function Products() {
                       </div>
                       <p className="flex gap-4 items-center"><s className="text-gray-400 text-sm">Ksh {product.comparePrice}</s> <span>Ksh {product.price}</span></p>
                       <Form method="post">
-                        <input type="hidden" name="id" value={product.id} />
-                        <button
+                        <input type="hidden" name="id" value={product.productId} />
+                        <Button
                           type="submit"
-                          className="bg-brand-orange text-white px-4 py-2 rounded"
+                          name="_action"
+                          value="addToCart"
+                          onClick={(e) => e.stopPropagation()}
+                          className="bg-brand-orange text-white"
                         >
                           Add to cart
-                        </button>
+                        </Button>
                       </Form>
                     </div>
                   </ProductCard>

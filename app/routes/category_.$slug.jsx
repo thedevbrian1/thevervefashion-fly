@@ -1,7 +1,9 @@
 import { json } from "@remix-run/node";
 import { Form, Link, useLoaderData } from "@remix-run/react";
 import ProductCard from "~/components/ProductCard";
+import { Button } from "~/components/ui/button";
 import { getCategorizedProducts } from "~/models/product.server";
+import { getSession, sessionStorage, setSuccessMessage, setWarningMessage } from "~/session.server";
 import { featuredProducts } from "~/utils";
 
 export async function loader({ request, params }) {
@@ -22,6 +24,43 @@ export async function loader({ request, params }) {
 
     return json({ products, category }, {
         headers
+    });
+}
+
+export async function action({ request }) {
+    const session = await getSession(request);
+    const formData = await request.formData();
+    const action = formData.get('_action');
+    const id = formData.get('id');
+
+    switch (action) {
+        case 'addToCart': {
+            const cartItems = session.get('cartItems') ?? [];
+            console.log({ cartItems });
+            // Check if item is in cart
+            const productIds = cartItems.map(item => item.id);
+
+            const item = productIds.includes(Number(id));
+            if (item) {
+                setWarningMessage(session, "Item already in cart");
+                break;
+            }
+
+            let cartItem = {
+                id: Number(id),
+                count: 1
+            };
+
+            cartItems.push(cartItem);
+            session.set('cartItems', cartItems);
+            setSuccessMessage(session, 'Added to cart!');
+            break;
+        }
+    }
+    return json({ ok: true }, {
+        headers: {
+            "Set-Cookie": await sessionStorage.commitSession(session)
+        }
     });
 }
 
@@ -61,12 +100,15 @@ export default function Category() {
                                             product.quantity > 0
                                                 ? (<Form method="post">
                                                     <input type="hidden" name="id" value={product.id} />
-                                                    <button
+                                                    <Button
                                                         type="submit"
-                                                        className="bg-brand-orange text-white px-4 py-2 rounded"
+                                                        name="_action"
+                                                        value="addToCart"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="bg-brand-orange text-white"
                                                     >
                                                         Add to cart
-                                                    </button>
+                                                    </Button>
                                                 </Form>)
                                                 : <p className="bg-red-50 text-red-500 p-4 rounded max-w-fit">Out of stock</p>
                                         }

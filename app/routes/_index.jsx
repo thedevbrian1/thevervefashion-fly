@@ -2,7 +2,9 @@ import { json, redirect } from "@remix-run/node";
 import { Form, Link, isRouteErrorResponse, useLoaderData, useRouteError } from "@remix-run/react";
 import { ArrowRightIcon, ErrorIllustration, MpesaIcon } from "~/components/Icon";
 import ProductCard from "~/components/ProductCard";
+import { Button } from "~/components/ui/button";
 import { getProducts } from "~/models/product.server";
+import { getSession, sessionStorage, setSuccessMessage, setWarningMessage } from "~/session.server";
 import { createClient } from "~/supabase.server";
 // import { featuredProducts } from "~/utils";
 
@@ -40,6 +42,42 @@ export async function loader({ request }) {
   });
 
   return json({ products }, headers);
+}
+
+export async function action({ request }) {
+  const session = await getSession(request);
+  const formData = await request.formData();
+  const action = formData.get('_action');
+  const id = formData.get('id');
+
+  switch (action) {
+    case 'addToCart': {
+      const cartItems = session.get('cartItems') ?? [];
+      // Check if item is in cart
+      const productIds = cartItems.map(item => item.id);
+
+      const item = productIds.includes(Number(id));
+      if (item) {
+        setWarningMessage(session, "Item already in cart");
+        break;
+      }
+
+      let cartItem = {
+        id: Number(id),
+        count: 1
+      };
+
+      cartItems.push(cartItem);
+      session.set('cartItems', cartItems);
+      setSuccessMessage(session, 'Added to cart!');
+      break;
+    }
+  }
+  return json({ ok: true }, {
+    headers: {
+      "Set-Cookie": await sessionStorage.commitSession(session)
+    }
+  });
 }
 
 export default function Index() {
@@ -227,12 +265,15 @@ function NewArrivals() {
                     <p className="flex gap-4 items-center"><s className="text-gray-400 text-sm">Ksh {arrival.comparePrice}</s> <span>Ksh {arrival.price}</span></p>
                     <Form method="post">
                       <input type="hidden" name="id" value={arrival.productId} />
-                      <button
+                      <Button
                         type="submit"
-                        className="bg-brand-orange text-white px-4 py-2 rounded"
+                        name="_action"
+                        value="addToCart"
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-brand-orange text-white"
                       >
                         Add to cart
-                      </button>
+                      </Button>
                     </Form>
                   </div>
                 </ProductCard>
@@ -278,12 +319,15 @@ function FeaturedProducts() {
                     <p className="flex gap-4 items-center"><s className="text-gray-400 text-sm">Ksh {product.comparePrice}</s> <span>Ksh {product.price}</span></p>
                     <Form method="post">
                       <input type="hidden" name="id" value={product.productId} />
-                      <button
+                      <Button
                         type="submit"
-                        className="bg-brand-orange text-white px-4 py-2 rounded"
+                        name="_action"
+                        value="addToCart"
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-brand-orange text-white"
                       >
                         Add to cart
-                      </button>
+                      </Button>
                     </Form>
                   </div>
                 </ProductCard>

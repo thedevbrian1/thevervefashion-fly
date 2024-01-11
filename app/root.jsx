@@ -52,16 +52,18 @@ export async function loader({ request }) {
   const isLoggedIn = sbSession.data.session ? true : false;
 
   const toastMessage = session.get('toastMessage');
+  const cartItems = session.get('cartItems') ?? [];
+  const cartCount = cartItems.length;
 
   const allHeaders = { ...Object.fromEntries(headers.entries()), "Set-Cookie": await sessionStorage.commitSession(session) };
 
   if (!toastMessage) {
-    return json({ toastMessage: null, isLoggedIn }, {
+    return json({ toastMessage: null, isLoggedIn, cartCount }, {
       headers: allHeaders
     });
   }
 
-  return json({ toastMessage, isLoggedIn }, {
+  return json({ toastMessage, isLoggedIn, cartCount }, {
     headers: allHeaders
   });
 }
@@ -155,6 +157,9 @@ export default function App() {
 
       case "error":
         toastId.current = toast.error(message);
+        break;
+      case "warning":
+        toastId.current = toast.warning(message);
         break;
     }
     return () => toast.dismiss(toastId.current);
