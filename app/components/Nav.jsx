@@ -5,7 +5,8 @@ import { CartIcon, HamburgerIcon, XIcon } from "./Icon";
 import { navLinks } from "~/utils";
 
 export default function Nav({ navLinks, isLoggedIn }) {
-    const cartCount = useLoaderData();
+    const { cartCount } = useLoaderData();
+
     const [isMenuShowing, setIsMenuShowing] = useState(false);
 
     function toggleMenu() {
@@ -46,9 +47,14 @@ export default function Nav({ navLinks, isLoggedIn }) {
                     ))}
                 </ul>
                 <div className="flex gap-2 items-center">
-                    <Link to={"/cart"} className="flex gap-2">
-                        <CartIcon /> Cart
-                    </Link>
+                    <div className="relative">
+                        <Link to={"/cart"} className="flex gap-2">
+                            <CartIcon /> Cart
+                        </Link>
+                        {cartCount > 0 ? (<span className="absolute -top-4 right-5 rounded-full bg-brand-orange w-6 h-6  text-white font-mono text-xs  leading-tight flex justify-center items-center">{cartCount}
+                        </span>) : null}
+                        {/* <span>{cartCount}</span> */}
+                    </div>
                     {isLoggedIn
                         ? <Form method="post" action="/logout">
                             <button
@@ -76,7 +82,7 @@ export default function Nav({ navLinks, isLoggedIn }) {
                         prefetch="intent"
                     >
                         <CartIcon />
-                        {cartCount > 0 ? (<span className="absolute -top-5 -right-2 rounded-full bg-brand-yellow w-6 h-6 md:w-8 md:h-8  text-black font-mono text-sm  leading-tight flex justify-center items-center">{cartCount}
+                        {cartCount > 0 ? (<span className="absolute top-0 right-10 rounded-full bg-brand-orange w-6 h-6  text-white font-mono text-xs  leading-tight flex justify-center items-center">{cartCount}
                         </span>) : null}
 
                     </NavLink>
