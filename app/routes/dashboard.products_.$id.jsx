@@ -610,6 +610,7 @@ function DeletableImage({ imageSrc, id }) {
 
     return (
         <div className={`w-full h-full relative rounded ${isSubmitting ? 'opacity-50' : ''}`}>
+            {/* TODO: Optimistic delete */}
             <img src={imageSrc} alt="" className="w-full h-full object-cover" />
             <fetcher.Form method="post" className="absolute right-2 top-2 text-red-500 hover:text-red-700 transition ease-in-out duration-300">
                 <input type="hidden" name="imageId" value={id} />
