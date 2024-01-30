@@ -12,26 +12,18 @@ export async function loader({ request }) {
 
     const cartItems = session.get('cartItems') ?? [];
 
-    const productIds = cartItems.map(item => item.id);
-
-
-    let matchedProducts = [];
-    let matchedImages = [];
-    if (cartItems.length > 0) {
-        matchedProducts = data.product.filter((item) => productIds.includes(item.product_id));
-        matchedImages = data.images.filter((item) => productIds.includes(item.product_id));
-    }
-
-    const products = matchedProducts.map(item => {
-        let cartItem = {
-            title: item.Products.title,
-            price: item.price,
-            productId: item.product_id,
-            image: matchedImages.filter((image) => item.product_id === image.product_id),
-            count: cartItems.find(cartItem => cartItem.id === item.product_id).count
+    const products = data.product.map(product => {
+        let imageSrc = data.images.find(image => image.product_id === product.product_id);
+        let details = {
+            title: product.Products.title,
+            price: product.price,
+            imageSrc: imageSrc?.image_src,
+            count: cartItems.find(cartItem => cartItem.id === product.product_id).count,
+            productId: product.product_id
         };
-        return cartItem;
-    })
+        return details;
+    });
+
     return json({ products }, {
         headers
     });
@@ -99,6 +91,7 @@ export async function action({ request }) {
 
 export default function Cart() {
     const { products } = useLoaderData();
+
     const navigation = useNavigation();
     const doubleCheckDelete = useDoubleCheck();
 
@@ -154,7 +147,7 @@ export default function Cart() {
                                         key={product.productId}
                                         title={product.title}
                                         price={product.price}
-                                        image={product.image}
+                                        image={product.imageSrc}
                                         id={product.productId}
                                         count={product.count}
                                     />
@@ -215,7 +208,7 @@ function CartItem({ title, price, image, id, count }) {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <img
-                        src={image[0]?.image_src}
+                        src={image}
                         alt=""
                         className="w-14 lg:w-24 aspect-square rounded-full object-cover"
                     />

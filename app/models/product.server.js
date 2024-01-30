@@ -2,6 +2,7 @@ import { createClient } from "~/supabase.server";
 import { getVariationById } from "./variation.server";
 import { getImage, getImages } from "./image.server";
 import { getCategoryId } from "./category.server";
+import { getSession } from "~/session.server";
 
 export async function addProduct(request, title, description, categoryId) {
     const { supabaseClient, headers } = createClient(request);
@@ -83,10 +84,15 @@ export async function deleteProduct(request, id) {
 }
 
 export async function getCartProducts(request) {
+    const session = await getSession(request);
+    const cartItems = session.get('cartItems');
+    const cartItemIds = cartItems.map(item => item.id);
+
     const { supabaseClient, headers } = createClient(request);
+
     const [{ data: product, error: productError }, { data: images, error: imageError }] = await Promise.all([
-        supabaseClient.from('Product_item').select('price,product_id,Products(title)'),
-        supabaseClient.from('Images').select('image_src,product_id')
+        supabaseClient.from('Product_item').select('price,product_id,Products(title)').in('product_id', cartItemIds),
+        supabaseClient.from('Images').select('image_src,product_id').in('product_id', cartItemIds)
     ]);
     if (productError) {
         throw new Error(productError);
