@@ -3,14 +3,14 @@ import { Form, Link, useActionData, useFetcher, useLoaderData, useNavigation, us
 import { useRef, useState } from "react";
 // import { TrashIcon } from "lucide-react";
 import FormSpacer from "~/components/FormSpacer";
-import { PlusIcon, TrashIcon } from "~/components/Icon";
+import { ArrowLeftIcon, PlusIcon, TrashIcon } from "~/components/Icon";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
 import { getCategories, getCategoryId } from "~/models/category.server";
-import { addImage, deletemage } from "~/models/image.server";
+import { addImage, deleteImage } from "~/models/image.server";
 import { deleteProduct, getProductById } from "~/models/product.server";
 import { deleteCloudinaryImage, getCloudinaryPublicId, uploadImage } from "~/services/cloudinary.server";
 import { getSession, sessionStorage, setSuccessMessage } from "~/session.server";
@@ -18,10 +18,11 @@ import { createClient } from "~/supabase.server";
 import { badRequest, useDoubleCheck, validatePrice, validateQuantity, validateText } from "~/utils";
 
 export async function loader({ request, params }) {
-    const res = await getCategories(request);
-    const product = await getProductById(request, Number(params.id));
+    const [res, product] = await Promise.all([
+        getCategories(request),
+        getProductById(request, Number(params.id))
+    ]);
     const categories = res.data.map(category => category.title);
-    // console.log({ res });
     return { product, categories };
 }
 
@@ -101,11 +102,16 @@ export async function action({ request, params }) {
         case 'deleteImage': {
             const publicId = getCloudinaryPublicId(imageSrc);
             // Delete image from db
-            const { data, error, headers } = await deletemage(request, Number(imageId));
+            const { data, error, headers } = await deleteImage(request, Number(imageId));
 
             // Delete image from cloudinary
             const deleted = await deleteCloudinaryImage(publicId);
             setSuccessMessage(session, 'Deleted successfully!');
+            return redirect(`/dashboard/products/${id}`, {
+                headers: {
+                    "Set-Cookie": await sessionStorage.commitSession(session)
+                }
+            });
             break;
         }
         case 'addImage': {
@@ -117,6 +123,11 @@ export async function action({ request, params }) {
             }));
 
             setSuccessMessage(session, 'Added successfully!');
+            return redirect(`/dashboard/products/${id}`, {
+                headers: {
+                    "Set-Cookie": await sessionStorage.commitSession(session)
+                }
+            });
             break;
         }
         case 'pricing': {
@@ -207,8 +218,6 @@ export async function action({ request, params }) {
 
 export default function Product() {
     const { product, categories } = useLoaderData();
-    console.log({ product });
-    console.log(product.data.variation.variationValues[0][0].value);
 
     const params = useParams();
     const productId = Number(params.id);
@@ -225,8 +234,6 @@ export default function Product() {
         const files = event.target.files;
         let imagesArray = [];
 
-        console.log({ files });
-
         for (let i = 0; i < files.length; i++) {
             const reader = new FileReader();
             reader.onload = () => {
@@ -241,7 +248,10 @@ export default function Product() {
     return (
         <div className="lg:max-w-4xl 2xl:max-w-6xl mt-8 md:mt-12">
             {/* TODO: Implement cancel functionality */}
-            <h1 className="font-semibold font-heading text-2xl lg:text-3xl">{product.data.Products.title}</h1>
+            <Link to="/dashboard/products" className="flex gap-2 hover:text-brand-orange transition duration-300 ease-in-out">
+                <ArrowLeftIcon /> Back to products
+            </Link>
+            <h1 className="font-semibold font-heading text-2xl lg:text-3xl mt-8">{product.data.Products.title}</h1>
             <h2 className="order-2 md:order-1 font-medium text-lg text-gray-600 mt-4">Edit product</h2>
             <Form method="post" className="mt-4 border border-slate-200 p-6 rounded">
                 <fieldset>
@@ -324,14 +334,14 @@ export default function Product() {
                                 name="intent"
                                 value="save"
                             >
-                                {(isSubmitting && navigation.formData.get('_action') === 'product' && navigation.formData.get('intent') === 'save') ? 'Saving...' : 'Save'}
+                                {(isSubmitting && navigation.formData?.get('_action') === 'product' && navigation.formData?.get('intent') === 'save') ? 'Saving...' : 'Save'}
                             </Button>
                         </div>
                     </div>
                 </fieldset>
             </Form>
 
-            <div className="border border-slate-200 p-6 rounded mt-4">
+            <div className="border border-slate-200 p-6 rounded mt-4" id="images">
                 <p className="font-semibold">Images</p>
                 {
                     product.data.images.length === 0
@@ -374,7 +384,7 @@ export default function Product() {
                                 type='file'
                                 name='image'
                                 id='image'
-                                accept='image/png, image/jpg, image/jpeg'
+                                accept='image/'
                                 onChange={handleImageChange}
                                 multiple
                                 required
@@ -391,7 +401,7 @@ export default function Product() {
                                 <h3 className="text-gray-800">Selected images:</h3>
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4  mt-2">
                                     {images.map((image, index) => (
-                                        <div className="w-full h-full" key={index}>
+                                        <div className="w-full h-40" key={index}>
                                             <img
                                                 src={image}
                                                 alt={`Uploaded ${index}`}
@@ -424,7 +434,7 @@ export default function Product() {
                             value="save"
                             form="add-image"
                         >
-                            {(isSubmitting && navigation.formAction === '/resources/upload' && navigation.formData.get('intent') === 'save') ? 'Saving...' : 'Save'}
+                            {(isSubmitting && navigation.formAction === '/resources/upload' && navigation.formData?.get('intent') === 'save') ? 'Saving...' : 'Save'}
                         </Button>
                     </div>
                 </div>
@@ -497,7 +507,7 @@ export default function Product() {
                                 name="intent"
                                 value="save"
                             >
-                                {(isSubmitting && navigation.formData.get('_action') === 'pricing' && navigation.formData.get('intent') === 'save') ? 'Saving...' : 'Save'}
+                                {(isSubmitting && navigation.formData?.get('_action') === 'pricing' && navigation.formData?.get('intent') === 'save') ? 'Saving...' : 'Save'}
                             </Button>
                         </div>
                         {/* TODO: Add cost per item, profit & margin */}
@@ -570,7 +580,7 @@ export default function Product() {
                                 name="intent"
                                 value="save"
                             >
-                                {(isSubmitting && navigation.formData.get('_action') === 'variant' && navigation.formData.get('intent') === 'save') ? 'Saving...' : 'Save'}
+                                {(isSubmitting && navigation.formData?.get('_action') === 'variant' && navigation.formData?.get('intent') === 'save') ? 'Saving...' : 'Save'}
                             </Button>
                         </div>
                     </div>
@@ -586,7 +596,7 @@ export default function Product() {
                     {...doubleCheckDelete.getButtonProps()}
                 >
                     {doubleCheckDelete.doubleCheck
-                        ? isSubmitting && navigation.formData.get('_action') === 'deleteProduct'
+                        ? isSubmitting && navigation.formData?.get('_action') === 'deleteProduct'
                             ? 'Deleting...'
                             : 'Are you sure?'
                         : 'Delete product'
@@ -609,7 +619,7 @@ function DeletableImage({ imageSrc, id }) {
     const isSubmitting = fetcher.state !== 'idle';
 
     return (
-        <div className={`w-full h-full relative rounded ${isSubmitting ? 'opacity-50' : ''}`}>
+        <div className={`w-full h-40 relative rounded ${isSubmitting ? 'opacity-50' : ''}`}>
             {/* TODO: Optimistic delete */}
             <img src={imageSrc} alt="" className="w-full h-full object-cover" />
             <fetcher.Form method="post" className="absolute right-2 top-2 text-red-500 hover:text-red-700 transition ease-in-out duration-300">

@@ -35,7 +35,7 @@ export async function loader({ request }) {
       title: product.Products.title,
       price: product.price,
       comparePrice: product.compare_price,
-      imageSrc: imageSrc.image_src,
+      imageSrc: imageSrc?.image_src,
       productId: product.product_id
     };
     return details;
@@ -256,7 +256,7 @@ function NewArrivals() {
             {/* TODO: Get new arrivals from db */}
             {newArrivals.map(arrival => (
               <Link to={`/products/${arrival.productId}`} key={arrival.productId}>
-                <ProductCard imageSrc={arrival.imageSrc}>
+                <ProductCard imageSrc={arrival?.imageSrc}>
                   <div className="p-4 space-y-2">
                     <div className="flex justify-between">
                       <h3 className="text-xl">{arrival.title}</h3>
@@ -310,7 +310,7 @@ function FeaturedProducts() {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-12">
             {featuredProducts.map(product => (
               <Link to={`/products/${product.productId}`} key={product.productId}>
-                <ProductCard imageSrc={product.imageSrc}>
+                <ProductCard imageSrc={product?.imageSrc}>
                   <div className="p-4 space-y-2">
                     <div className="flex justify-between">
                       <h3 className="text-xl">{product.title}</h3>

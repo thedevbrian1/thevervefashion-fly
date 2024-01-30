@@ -1,3 +1,4 @@
+import { json } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import { PlusIcon } from "~/components/Icon";
 import ProductCard from "~/components/ProductCard";
@@ -5,15 +6,30 @@ import { getProducts } from "~/models/product.server";
 
 export async function loader({ request }) {
     const { data, error, headers } = await getProducts(request);
-    return { data }
+
+    // console.log({ data });
+    // return json({ products: data });
+    const products = data.product.map(product => {
+        let imageSrc = data.image.find(image => image.product_id === product.product_id)
+        let details = {
+            title: product.Products.title,
+            price: product.price,
+            comparePrice: product.compare_price,
+            imageSrc: imageSrc?.image_src,
+            productId: product.product_id
+        };
+        return details;
+    });
+
+    return json({ products }, headers);
 }
 export default function DashboardProducts() {
-    const { data } = useLoaderData();
-    console.log({ data });
+    const { products } = useLoaderData();
+
     return (
         <div className="mt-8 md:mt-12">
             <h1 className="font-semibold font-heading text-2xl lg:text-3xl">Products</h1>
-            {data.product.length === 0
+            {products.length === 0
                 ? (<div className="w-full h-full grid place-items-center mt-8">
                     <img
                         src="/clipboard.svg"
@@ -28,19 +44,19 @@ export default function DashboardProducts() {
                     </div>
                 </div>)
                 : (<div className="mt-4 grid am:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {data.product.map((product, index) => (
+                    {products.map((product, index) => (
                         <Link
-                            key={index}
-                            to={`/dashboard/products/${product.product_id}`}
+                            key={product.productId}
+                            to={`/dashboard/products/${product.productId}`}
                             prefetch="intent"
                         >
-                            <ProductCard imageSrc={data.image[index].image_src}>
+                            <ProductCard imageSrc={product?.imageSrc} id={product.productId}>
                                 <div className="p-4 space-y-2">
                                     <div className="flex justify-between">
-                                        <h3 className="text-xl">{product.Products.title}</h3>
+                                        <h3 className="text-xl">{product.title}</h3>
                                         {/* <span>{product.rating}</span> */}
                                     </div>
-                                    <p className="flex gap-4 items-center"><s className="text-gray-400 text-sm">Ksh {product.compare_price}</s> <span>Ksh {product.price}</span></p>
+                                    <p className="flex gap-4 items-center"><s className="text-gray-400 text-sm">Ksh {product.comparePrice}</s> <span>Ksh {product.price}</span></p>
 
                                 </div>
                             </ProductCard>

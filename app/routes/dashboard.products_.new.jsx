@@ -55,6 +55,8 @@ export async function action({ request }) {
 
     const formData = await unstable_parseMultipartFormData(request, uploadHandler);
 
+    // const formData = await request.formData();
+
     const image = formData.getAll('image');
     const title = formData.get('title');
     const description = formData.get('description');
@@ -141,6 +143,7 @@ export async function action({ request }) {
     });
 }
 
+// FIXME: Image upload not working
 export default function NewProduct() {
     const actionData = useActionData();
     const navigation = useNavigation();
@@ -241,10 +244,10 @@ export default function NewProduct() {
                                 type='file'
                                 name='image'
                                 id='image'
-                                accept='image/png, image/jpg, image/jpeg'
+                                accept='image/'
                                 onChange={handleImageChange}
                                 multiple
-                                required
+                                // required
                                 className="file:py-2 file:px-4 file:rounded-full file:bg-orange-50 file:text-brand-orange hover:file:bg-orange-100"
                             />
                         </FormSpacer>

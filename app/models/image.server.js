@@ -30,7 +30,7 @@ export async function getImage(request, productId) {
     return { data, error, headers };
 }
 
-export async function deletemage(request, id) {
+export async function deleteImage(request, id) {
     const { supabaseClient, headers } = createClient(request);
     const { data, error } = await supabaseClient
         .from('Images')
