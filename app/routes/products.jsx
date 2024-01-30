@@ -39,7 +39,7 @@ export async function loader({ request }) {
       title: product.Products.title,
       price: product.price,
       comparePrice: product.compare_price,
-      imageSrc: imageSrc.image_src,
+      imageSrc: imageSrc?.image_src,
       productId: product.product_id
     };
     return details;

@@ -1,10 +1,10 @@
 import { json } from "@remix-run/node";
-import { Form, Link, useLoaderData } from "@remix-run/react";
+import { Form, Link, isRouteErrorResponse, useLoaderData, useRouteError } from "@remix-run/react";
+import { ErrorIllustration } from "~/components/Icon";
 import ProductCard from "~/components/ProductCard";
 import { Button } from "~/components/ui/button";
 import { getCategorizedProducts } from "~/models/product.server";
 import { getSession, sessionStorage, setSuccessMessage, setWarningMessage } from "~/session.server";
-import { featuredProducts } from "~/utils";
 
 export async function loader({ request, params }) {
     const category = params.slug;
@@ -15,7 +15,7 @@ export async function loader({ request, params }) {
             title: product.data.Products.title,
             price: product.data.price,
             comparePrice: product.data.compare_price,
-            imageSrc: product.data.images[0].image_src,
+            imageSrc: product.data.images[0]?.image_src,
             quantity: product.data.quantity,
             id: product.data.product_id
         };
@@ -124,4 +124,48 @@ export default function Category() {
 
         </main>
     );
+}
+
+export function ErrorBoundary() {
+    const error = useRouteError();
+
+    if (isRouteErrorResponse(error)) {
+        console.log({ error });
+        return (
+            <div className="bg-red-100 text-red-500 w-full h-screen grid place-items-center px-4 py-6">
+                <div className="flex flex-col items-center gap-2">
+                    <div className="flex flex-col items-center">
+                        <div className="w-60 lg:w-72">
+                            <ErrorIllustration />
+                        </div>
+                        <h1 className="text-3xl font-semibold mt-4">{error.status} {error.statusText}</h1>
+                        <p>{error.data}</p>
+                    </div>
+                    <Link to='.' className="underline text-brand-black">
+                        Try again
+                    </Link>
+                </div>
+            </div>
+        );
+    } else if (error instanceof Error) {
+        console.log({ error });
+        return (
+            <div className="bg-red-100 text-red-500 w-full h-screen grid place-items-center px-4 py-6">
+                <div className="flex flex-col items-center gap-2">
+                    <div className="flex flex-col items-center">
+                        <div className="w-60 lg:w-72">
+                            <ErrorIllustration />
+                        </div>
+                        <h1 className="text-3xl font-semibold mt-4">Error</h1>
+                        <p>{error.message}</p>
+                    </div>
+                    <Link to="." className="underline text-brand-black">
+                        Try again
+                    </Link>
+                </div>
+            </div>
+        );
+    } else {
+        return <h1>Unknown Error</h1>;
+    }
 }

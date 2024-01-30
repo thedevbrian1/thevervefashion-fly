@@ -31,12 +31,11 @@ export async function action({ request }) {
 export default function Product() {
     const colours = ['Black', 'Red', 'Green'];
     const { product } = useLoaderData();
-    console.log({ product });
     return (
         <main className="mt-16 px-4 lg:px-0 lg:max-w-5xl mx-auto grid lg:grid-cols-2 gap-4 lg:gap-8">
             <div>
                 {/* Images */}
-                <img src={product.images[0].image_src} alt="" className="aspect-[4/3] object-cover" />
+                <img src={product.images[0]?.image_src} alt="" className="aspect-[4/3] object-cover" />
             </div>
             <div>
                 {/* Description */}
