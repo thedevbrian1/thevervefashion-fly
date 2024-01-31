@@ -35,6 +35,7 @@
     "instantsearch.css": "^8.1.0",
     "isbot": "^3.6.8",
     "lucide-react": "^0.294.0",
+    "node-mailjet": "^6.0.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-instantsearch": "^7.3.0",

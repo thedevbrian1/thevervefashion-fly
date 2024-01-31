@@ -164,3 +164,39 @@ function callAll(...fns) {
 export function badRequest(data) {
     return json(data, { status: 404 });
 }
+
+export async function sendEmail(name, email, contact, products) {
+    const Mailjet = require('node-mailjet');
+    const mailjet = Mailjet.apiConnect(process.env.MJ_APIKEY_PUBLIC, process.env.MJ_APIKEY_PRIVATE);
+
+    let res;
+
+    try {
+        res = await mailjet
+            .post("send", { 'version': 'v3' })
+            .request({
+                "FromEmail": "brayomwas95@gmail.com",
+                "FromName": "The Verve Fashion",
+                "Recipients": [
+                    {
+                        "Email": "thedevbrian@gmail.com",
+                        "Name": "Brian Mwangi"
+                    }
+                ],
+                "Subject": "Purchase request",
+                "Text-part": "This is the text part of this email",
+                "Html-part": `
+            <h3>Purchase request</h3>
+            <p>Hi I would like to order ${products}</p>
+            <p>Here are my contact details: </p>
+            <p>Name: ${name} </p>
+            <p>Email: ${email} </p>
+            <p>Phone: ${contact} </p>
+            `
+            });
+        // console.log('Email response: ', res);
+    } catch (err) {
+        throw new Response(err, { status: err.statusCode })
+    }
+    return res;
+}

@@ -1,9 +1,11 @@
 import { json } from "@remix-run/node";
-import { Form, useLoaderData } from "@remix-run/react";
+import { Form, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
+import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { getCartProducts } from "~/models/product.server";
 import { getSession } from "~/session.server";
+import { badRequest, sendEmail, trimValue, validateEmail, validatePhone, validateText } from "~/utils";
 
 export async function loader({ request }) {
     const session = await getSession(request);
@@ -28,11 +30,57 @@ export async function loader({ request }) {
 }
 export async function action({ request }) {
 
+
+    // Validation
+    const formData = await request.formData();
+    const name = formData.get('name');
+    // const mpesa = formData.get('mpesa');
+    const contact = formData.get('contact');
+    const email = formData.get('email');
+
+    const fieldErrors = {
+        name: validateText(name),
+        // mpesa: validatePhone(trimValue(mpesa)),
+        contact: validatePhone(trimValue(contact)),
+        email: validateEmail(email)
+    };
+
+    if (Object.values(fieldErrors).some(Boolean)) {
+        return badRequest({ fieldErrors });
+    }
+
+    const session = await getSession(request);
+    const { data, headers } = await getCartProducts(request);
+
+    const cartItems = session.get('cartItems');
+
+    const products = data.product.map(product => {
+        let imageSrc = data.images.find(image => image.product_id === product.product_id);
+        let details = {
+            title: product.Products.title,
+            price: product.price,
+            imageSrc: imageSrc?.image_src,
+            count: cartItems.find(cartItem => cartItem.id === product.product_id).count
+        };
+        return details;
+    });
+    // TODO: Update db by recording an order entry and decreasing the quantity of the item
+
+    // TODO: Send email
+    // const res = await sendEmail(name, email, contact, products);
+    // if (res.status === 200) {
+    //     return redirect('/success');
+    // }
     return null;
 }
 
 export default function Checkout() {
     const { products } = useLoaderData();
+    const actionData = useActionData();
+    const navigation = useNavigation();
+
+    const isSubmitting = navigation.state === 'submitting';
+
     console.log({ products });
 
     const subTotals = products.map(product => product.price * product.count);
@@ -59,23 +107,49 @@ export default function Checkout() {
                     <Form method="post" className="mt-4">
                         <fieldset className="space-y-4">
                             <div>
+                                <Label htmlFor="name">Name</Label>
+                                <Input
+                                    type='text'
+                                    name='name'
+                                    id='name'
+                                    placeholder='John Doe'
+                                    className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.name ? 'border border-red-500' : ''}`}
+
+                                />
+                                {actionData?.fieldErrors?.name
+                                    ? <p className="text-red-500 transition ease-in-out duration-300">{actionData.fieldErrors.name}</p>
+                                    : null
+                                }
+                            </div>
+                            {/* <div>
                                 <Label htmlFor="mpesa">Mpesa number</Label>
                                 <Input
                                     type='text'
                                     name='mpesa'
                                     id='mpesa'
                                     placeholder='0712 345 678'
+                                    className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.mpesa ? 'border border-red-500' : ''}`}
+
                                 />
+                                {actionData?.fieldErrors?.mpesa
+                                    ? <p className="text-red-500 transition ease-in-out duration-300">{actionData.fieldErrors.mpesa}</p>
+                                    : null
+                                }
                             </div>
-                            <p className="text-brand-orange bg-brand-orange bg-opacity-10 p-4 rounded">You will receive a prompt on your phone. Complete the transaction by entering your MPESA pin.</p>
+                            <p className="text-brand-orange bg-brand-orange bg-opacity-10 p-4 rounded">You will receive a prompt on your phone. Complete the transaction by entering your MPESA pin.</p> */}
                             <div>
-                                <Label htmlFor='phone'>Contact number (We will contact you using this number)</Label>
+                                <Label htmlFor='contact'>Contact number (We will contact you using this number)</Label>
                                 <Input
                                     type='text'
-                                    name='phone'
-                                    id='phone'
+                                    name='contact'
+                                    id='contact'
                                     placeholder='0712 345 678'
+                                    className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.contact ? 'border border-red-500' : ''}`}
                                 />
+                                {actionData?.fieldErrors?.contact
+                                    ? <p className="text-red-500 transition ease-in-out duration-300">{actionData.fieldErrors.contact}</p>
+                                    : null
+                                }
                             </div>
                             <div>
                                 <Label htmlFor='email'>Email</Label>
@@ -84,11 +158,16 @@ export default function Checkout() {
                                     name='email'
                                     id='email'
                                     placeholder='johndoe@email.com'
+                                    className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.email ? 'border border-red-500' : ''}`}
                                 />
+                                {actionData?.fieldErrors?.email
+                                    ? <p className="text-red-500 transition ease-in-out duration-300">{actionData.fieldErrors.email}</p>
+                                    : null
+                                }
                             </div>
-                            <button type="submit" className="bg-brand-orange text-white px-8 py-2 rounded">
-                                Submit
-                            </button>
+                            <Button type="submit" className="bg-brand-orange">
+                                {isSubmitting ? 'Submitting...' : 'Submit'}
+                            </Button>
                         </fieldset>
                     </Form>
                 </div>
