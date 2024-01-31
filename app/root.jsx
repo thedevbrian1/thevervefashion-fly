@@ -202,68 +202,73 @@ export default function App() {
           </div>
         </header>
         <Outlet />
-        <footer className="bg-brand-gray font-body text-brand-black text-opacity-70 mt-20 xl:mt-32 py-24">
-          <div className="flex flex-col lg:flex-row gap-5 px-6 md:px-10 lg:px-0 lg:max-w-4xl lg:mx-auto lg:justify-evenly">
-            <p>TheVerveFashion</p>
-            <div>
-              <h2 className="font-semibold font-heading">Quick links</h2>
-              <ul className="space-y-1 mt-2">
-                {footerLinks.map((link, index) => (
-                  <li key={index}>
-                    <NavLink to={link.path} prefetch="intent">
-                      {link.name}
-                    </NavLink>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h2 className="font-semibold font-heading">Products</h2>
-              <ul className="space-y-1 mt-2">
-                {footerProducts.map((product, index) => (
-                  <li key={index}>
-                    <Link to={product.path} prefetch="intent">
-                      {product.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h2 className="font-semibold font-heading">Follow us on social media</h2>
-              <div className="flex gap-4 mt-2">
-                <div className="w-6">
-                  <InstagramIcon />
+        {location.pathname.includes('/dashboard')
+          ? null
+          : (
+            <footer className="bg-brand-gray font-body text-brand-black text-opacity-70 mt-20 xl:mt-32 py-24">
+              <div className="flex flex-col lg:flex-row gap-5 px-6 md:px-10 lg:px-0 lg:max-w-4xl lg:mx-auto lg:justify-evenly">
+                <p>TheVerveFashion</p>
+                <div>
+                  <h2 className="font-semibold font-heading">Quick links</h2>
+                  <ul className="space-y-1 mt-2">
+                    {footerLinks.map((link, index) => (
+                      <li key={index}>
+                        <NavLink to={link.path} prefetch="intent">
+                          {link.name}
+                        </NavLink>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <div className="w-6">
-                  <TwitterIcon />
+                <div>
+                  <h2 className="font-semibold font-heading">Products</h2>
+                  <ul className="space-y-1 mt-2">
+                    {footerProducts.map((product, index) => (
+                      <li key={index}>
+                        <Link to={product.path} prefetch="intent">
+                          {product.name}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h2 className="font-semibold font-heading">Follow us on social media</h2>
+                  <div className="flex gap-4 mt-2">
+                    <div className="w-6">
+                      <InstagramIcon />
+                    </div>
+                    <div className="w-6">
+                      <TwitterIcon />
+                    </div>
+                  </div>
+                  <p className="mt-4">Subscribe for exclusive deals, offers and promotions</p>
+                  <Form method="post" className="-mt-4">
+                    <fieldset className="flex items-center">
+                      <div>
+                        <label htmlFor="email" className="invisible">Email</label>
+                        <Input
+                          type='email'
+                          name='email'
+                          id='email'
+                          placeholder='Enter email here'
+                          fieldError={actionData?.fieldErrors?.email}
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        className="px-6 py-2 rounded bg-brand-orange text-white"
+                      >
+                        Subscribe
+                      </button>
+                    </fieldset>
+                  </Form>
                 </div>
               </div>
-              <p className="mt-4">Subscribe for exclusive deals, offers and promotions</p>
-              <Form method="post" className="-mt-4">
-                <fieldset className="flex items-center">
-                  <div>
-                    <label htmlFor="email" className="invisible">Email</label>
-                    <Input
-                      type='email'
-                      name='email'
-                      id='email'
-                      placeholder='Enter email here'
-                      fieldError={actionData?.fieldErrors?.email}
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="px-6 py-2 rounded bg-brand-orange text-white"
-                  >
-                    Subscribe
-                  </button>
-                </fieldset>
-              </Form>
-            </div>
-          </div>
-          <p className="text-center mt-8">Copyright &copy; {new Date().getFullYear()}</p>
-        </footer>
+              <p className="text-center mt-8">Copyright &copy; {new Date().getFullYear()}</p>
+            </footer>
+          )
+        }
         <ToastContainer position="bottom-right" />
         <ScrollRestoration />
         <Scripts />
