@@ -12,7 +12,7 @@ export async function loader({ request }) {
 
     const cartItems = session.get('cartItems') ?? [];
 
-    const products = data.product.map(product => {
+    const products = data.product?.map(product => {
         let imageSrc = data.images.find(image => image.product_id === product.product_id);
         let details = {
             title: product.Products.title,

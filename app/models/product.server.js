@@ -85,7 +85,7 @@ export async function deleteProduct(request, id) {
 
 export async function getCartProducts(request) {
     const session = await getSession(request);
-    const cartItems = session.get('cartItems');
+    const cartItems = session.get('cartItems') ?? [];
     const cartItemIds = cartItems.map(item => item.id);
 
     const { supabaseClient, headers } = createClient(request);
