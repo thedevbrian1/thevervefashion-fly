@@ -11,7 +11,7 @@ export async function action({ request }) {
             }
             // TODO: Don't upload image if there is a validation error
             const uploadedImage = await uploadImage(data);
-            console.log({ uploadedImage });
+            // console.log({ uploadedImage });
             return uploadedImage.secure_url;
             // return null;
         },
