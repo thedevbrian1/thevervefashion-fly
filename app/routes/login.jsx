@@ -104,7 +104,7 @@ export default function Login() {
                     </fieldset>
                 </Form>
                 <div className="flex justify-between text-blue-500 text-sm underline mt-4">
-                    <Link to="/login" className="hover:text-blue-400">
+                    <Link to="/forgot-password" className="hover:text-blue-400">
                         Forgot password
                     </Link>
                     <Link to="/signup" className="hover:text-blue-400">
