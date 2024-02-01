@@ -6,8 +6,9 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { badRequest, trimValue, validateEmail, validatePassword, validatePhone } from "../utils";
-import { ErrorIllustration } from "~/components/Icon";
+import { ErrorIllustration, EyeIcon, EyeslashIcon } from "~/components/Icon";
 import { getSession, sessionStorage, setSuccessMessage } from "~/session.server";
+import { useState } from "react";
 
 export async function action({ request }) {
     const session = await getSession(request);
@@ -83,6 +84,8 @@ export default function Signup() {
 
     const isSubmitting = navigation.state === 'submitting';
 
+    const [isShowingPassword, setIsShowingPassword] = useState(false);
+
     return (
         <main className="w-full min-h-screen bg-[url('/ecommerce.jpg')] bg-cover bg-center bg-no-repeat bg-black bg-blend-overlay bg-opacity-70 pt-20 md:pt-0 md:grid md:place-items-center">
             <div className="max-w-xs md:w-96 mx-auto bg-gray-200 bg-opacity-70 rounded p-6">
@@ -101,7 +104,7 @@ export default function Signup() {
                                 className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.phone ? 'border border-red-500' : ''}`}
                             />
                             {actionData?.fieldErrors?.phone
-                                ? <p className="text-red-500 transition ease-in-out duration-300">{actionData.fieldErrors.phone}</p>
+                                ? <p className="text-red-500 text-sm transition ease-in-out duration-300">{actionData.fieldErrors.phone}</p>
                                 : null
                             }
 
@@ -118,7 +121,7 @@ export default function Signup() {
                                 className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.email ? 'border border-red-500' : ''}`}
                             />
                             {actionData?.fieldErrors?.email
-                                ? <p className="text-red-500 transition ease-in-out duration-300">{actionData.fieldErrors.email}</p>
+                                ? <p className="text-red-500 text-sm transition ease-in-out duration-300">{actionData.fieldErrors.email}</p>
                                 : null
                             }
                         </FormSpacer>
@@ -127,15 +130,23 @@ export default function Signup() {
                                 Password
                             </Label>
                             <Input
-                                type="password"
+                                type={isShowingPassword ? 'text' : 'password'}
                                 id="password"
                                 name="password"
                                 className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.password ? 'border border-red-500' : ''}`}
                             />
                             {actionData?.fieldErrors?.password
-                                ? <p className="text-red-500 transition ease-in-out duration-300">{actionData.fieldErrors.password}</p>
+                                ? <p className="text-red-500 text-sm transition ease-in-out duration-300">{actionData.fieldErrors.password}</p>
                                 : null
                             }
+                            <span
+                                className="flex gap-1 cursor-pointer text-sm"
+                                onClick={() => setIsShowingPassword(!isShowingPassword)}>{isShowingPassword
+                                    ? (
+                                        <><EyeslashIcon />Hide password</>)
+                                    : (<><EyeIcon />Show password</>)
+                                }
+                            </span>
                         </FormSpacer>
                         <FormSpacer>
                             <Label htmlFor="password">
@@ -148,7 +159,7 @@ export default function Signup() {
                                 className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.confirmPassword ? 'border border-red-500' : ''}`}
                             />
                             {actionData?.fieldErrors?.confirmPassword
-                                ? <p className="text-red-500 transition ease-in-out duration-300">{actionData.fieldErrors.confirmPassword}</p>
+                                ? <p className="text-red-500 text-sm transition ease-in-out duration-300">{actionData.fieldErrors.confirmPassword}</p>
                                 : null
                             }
                         </FormSpacer>

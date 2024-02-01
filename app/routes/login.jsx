@@ -1,7 +1,8 @@
 import { redirect } from "@remix-run/node";
 import { Form, Link, isRouteErrorResponse, useActionData, useNavigation, useRouteError } from "@remix-run/react";
+import { useState } from "react";
 import FormSpacer from "~/components/FormSpacer";
-import { ErrorIllustration } from "~/components/Icon";
+import { ErrorIllustration, EyeIcon, EyeslashIcon } from "~/components/Icon";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -48,6 +49,8 @@ export default function Login() {
     const navigation = useNavigation();
     const isSubmitting = navigation.state === 'submitting';
 
+    const [isShowingPassword, setIsShowingPassword] = useState(false);
+
     return (
         <main className="min-h-screen w-full bg-[url('/ecommerce.jpg')] bg-cover bg-center bg-no-repeat bg-black bg-blend-overlay bg-opacity-50 grid place-items-center">
             {/* FIXME: Fix form width */}
@@ -76,7 +79,7 @@ export default function Login() {
                                 Password
                             </Label>
                             <Input
-                                type="password"
+                                type={isShowingPassword ? 'text' : 'password'}
                                 id="password"
                                 name="password"
                                 className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.password ? 'border border-red-500' : ''}`}
@@ -85,6 +88,14 @@ export default function Login() {
                                 ? <p className="text-red-500 text-sm transition ease-in-out duration-300">{actionData.fieldErrors.password}</p>
                                 : null
                             }
+                            <span
+                                className="flex gap-1 cursor-pointer text-sm"
+                                onClick={() => setIsShowingPassword(!isShowingPassword)}>{isShowingPassword
+                                    ? (
+                                        <><EyeslashIcon />Hide password</>)
+                                    : (<><EyeIcon />Show password</>)
+                                }
+                            </span>
                         </FormSpacer>
                         <Button type="submit" className="bg-brand-orange text-white">
                             {isSubmitting ? 'Logging in...' : 'Log in'}
