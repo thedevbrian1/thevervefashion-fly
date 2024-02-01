@@ -52,9 +52,9 @@ export default function Login() {
     const [isShowingPassword, setIsShowingPassword] = useState(false);
 
     return (
-        <main className="min-h-screen w-full bg-[url('/ecommerce.jpg')] bg-cover bg-center bg-no-repeat bg-black bg-blend-overlay bg-opacity-50 grid place-items-center">
+        <main className="min-h-screen w-full px-6 xl:px-0 bg-[url('/ecommerce.jpg')] bg-cover bg-center bg-no-repeat bg-black bg-blend-overlay bg-opacity-50 grid place-items-center">
             {/* FIXME: Fix form width */}
-            <div className="max-w-xs lg:max-w-sm mx-auto bg-gray-200 bg-opacity-70 rounded p-6">
+            <div className="w-full md:max-w-md mx-auto bg-gray-200 bg-opacity-70 rounded p-6">
                 <h1 className="font-heading text-2xl lg:text-3xl">Login</h1>
                 <Form method="post" className="mt-4 w-full">
                     <fieldset className="space-y-4">
@@ -97,17 +97,17 @@ export default function Login() {
                                 }
                             </span>
                         </FormSpacer>
-                        <Button type="submit" className="bg-brand-orange text-white">
+                        <Button type="submit" className="w-full bg-brand-orange text-white">
                             {isSubmitting ? 'Logging in...' : 'Log in'}
                         </Button>
                         {/* TODO: Add remember me */}
                     </fieldset>
                 </Form>
-                <div className="flex justify-between text-blue-500 text-sm underline mt-4">
-                    <Link to="/forgot-password" className="hover:text-blue-400">
+                <div className="flex justify-between text-black/80 text-sm underline mt-4">
+                    <Link to="/forgot-password" className="hover:text-blue-700">
                         Forgot password
                     </Link>
-                    <Link to="/signup" className="hover:text-blue-400">
+                    <Link to="/signup" className="hover:text-blue-700">
                         Don't have an account? Sign up instead
                     </Link>
                 </div>

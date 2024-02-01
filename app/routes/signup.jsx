@@ -70,9 +70,6 @@ export async function action({ request }) {
 
     const allHeaders = { ...Object.fromEntries(headers.entries()), "Set-Cookie": await sessionStorage.commitSession(session) };
 
-
-    // TODO: Show success toast when user is signed in or redirect to dashboard
-
     return json({ ok: true }, {
         headers: allHeaders
     });
@@ -84,11 +81,9 @@ export default function Signup() {
 
     const isSubmitting = navigation.state === 'submitting';
 
-    const [isShowingPassword, setIsShowingPassword] = useState(false);
-
     return (
-        <main className="w-full min-h-screen bg-[url('/ecommerce.jpg')] bg-cover bg-center bg-no-repeat bg-black bg-blend-overlay bg-opacity-70 pt-20 md:pt-0 md:grid md:place-items-center">
-            <div className="max-w-xs md:w-96 mx-auto bg-gray-200 bg-opacity-70 rounded p-6">
+        <main className="w-full min-h-screen px-6 xl:px-0 bg-[url('/ecommerce.jpg')] bg-cover bg-center bg-no-repeat bg-black bg-blend-overlay bg-opacity-70 pt-20 md:pt-0 md:grid md:place-items-center">
+            <div className="w-full md:max-w-md mx-auto bg-gray-200 bg-opacity-70 rounded p-6">
                 <h1 className="font-heading text-2xl lg:text-3xl">Signup</h1>
                 <Form method="post" className="mt-4">
                     <fieldset className="space-y-4">
@@ -125,47 +120,21 @@ export default function Signup() {
                                 : null
                             }
                         </FormSpacer>
-                        <FormSpacer>
-                            <Label htmlFor="password">
-                                Password
-                            </Label>
-                            <Input
-                                type={isShowingPassword ? 'text' : 'password'}
-                                id="password"
-                                name="password"
-                                className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.password ? 'border border-red-500' : ''}`}
-                            />
-                            {actionData?.fieldErrors?.password
-                                ? <p className="text-red-500 text-sm transition ease-in-out duration-300">{actionData.fieldErrors.password}</p>
-                                : null
-                            }
-                            <span
-                                className="flex gap-1 cursor-pointer text-sm"
-                                onClick={() => setIsShowingPassword(!isShowingPassword)}>{isShowingPassword
-                                    ? (
-                                        <><EyeslashIcon />Hide password</>)
-                                    : (<><EyeIcon />Show password</>)
-                                }
-                            </span>
-                        </FormSpacer>
-                        <FormSpacer>
-                            <Label htmlFor="password">
-                                Confirm Password
-                            </Label>
-                            <Input
-                                type="password"
-                                id="confirm-password"
-                                name="confirm-password"
-                                className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.confirmPassword ? 'border border-red-500' : ''}`}
-                            />
-                            {actionData?.fieldErrors?.confirmPassword
-                                ? <p className="text-red-500 text-sm transition ease-in-out duration-300">{actionData.fieldErrors.confirmPassword}</p>
-                                : null
-                            }
-                        </FormSpacer>
+                        <Password
+                            htmlFor='password'
+                            name='password'
+                            label='Password'
+                        />
+
+                        <Password
+                            htmlFor='confirm-password'
+                            name='confirm-password'
+                            label='Confirm Password'
+                        />
+
                         <Button
                             type="submit"
-                            className="bg-brand-orange text-white focus-visible:ring-brand-purple"
+                            className="w-full bg-brand-orange text-white focus-visible:ring-brand-purple"
                         >
                             {isSubmitting ? 'Signing up...' : 'Sign up'}
                         </Button>
@@ -175,14 +144,40 @@ export default function Signup() {
                     ? <p className="text-red-500 mt-2">
                         {actionData.formError}
                     </p>
-                    : null}
+                    : null
+                }
                 <div className="mt-4">
-                    <Link to="/login" className="text-blue-500 hover:text-blue-400 underline">
+                    <Link to="/login" className="text-black/80 hover:text-blue-700 underline">
                         Already have an account? Log in instead
                     </Link>
                 </div>
             </div>
         </main>
+    );
+}
+
+function Password({ htmlFor, name, label }) {
+    const actionData = useActionData();
+    const [isShowingPassword, setIsShowingPassword] = useState(false);
+
+    return (
+        <FormSpacer>
+            <Label htmlFor={htmlFor}>{label}</Label>
+            <Input
+                type={isShowingPassword ? 'text' : 'password'}
+                name={name}
+                id={htmlFor}
+                className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.password ? 'border border-red-500' : ''}`}
+            />
+            <span
+                className="flex gap-1 cursor-pointer text-sm"
+                onClick={() => setIsShowingPassword(!isShowingPassword)}>{isShowingPassword
+                    ? (
+                        <><EyeslashIcon />Hide password</>)
+                    : (<><EyeIcon />Show password</>)
+                }
+            </span>
+        </FormSpacer>
     );
 }
 

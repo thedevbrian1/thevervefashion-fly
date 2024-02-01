@@ -73,6 +73,11 @@ export default function UpdatePassword() {
                     </fieldset>
 
                 </Form>
+                {actionData?.formError
+                    ? <p className="text-red-500 mt-2">
+                        {actionData.formError}
+                    </p>
+                    : null}
             </div>
         </main>
     );

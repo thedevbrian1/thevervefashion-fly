@@ -246,13 +246,13 @@ export default function App() {
                   <Form method="post" className="-mt-4">
                     <fieldset className="flex items-center">
                       <div>
-                        <label htmlFor="email" className="invisible">Email</label>
+                        <label htmlFor="subscribe-email" className="invisible">Email</label>
                         <Input
                           type='email'
-                          name='email'
-                          id='email'
+                          name='subscribe-email'
+                          id='subscribe-email'
                           placeholder='Enter email here'
-                          fieldError={actionData?.fieldErrors?.email}
+                          fieldError={actionData?.fieldErrors?.subscribeEmail}
                         />
                       </div>
                       <button
