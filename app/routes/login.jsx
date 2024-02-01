@@ -24,9 +24,9 @@ export async function action({ request }) {
     }
 
     // Log in
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    const { data: { user }, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
-    // console.log({ data });
+    // console.log({ user });
 
     if (error) {
         throw new Error(error);
@@ -36,7 +36,11 @@ export async function action({ request }) {
 
     const allHeaders = { ...Object.fromEntries(headers.entries()), "Set-Cookie": await sessionStorage.commitSession(session) };
 
-    return redirect('/dashboard', { headers: allHeaders });
+    if (user.email === process.env.ADMIN_EMAIL || user.email === process.env.ADMIN_EMAIL_2) {
+        return redirect('/dashboard', { headers: allHeaders });
+    }
+
+    return redirect('/', { headers: allHeaders });
 }
 
 export default function Login() {
@@ -63,7 +67,7 @@ export default function Login() {
                                 className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.email ? 'border border-red-500' : ''}`}
                             />
                             {actionData?.fieldErrors?.email
-                                ? <p className="text-red-500 transition ease-in-out duration-300">{actionData.fieldErrors.email}</p>
+                                ? <p className="text-red-500 text-sm transition ease-in-out duration-300">{actionData.fieldErrors.email}</p>
                                 : null
                             }
                         </FormSpacer>
@@ -78,7 +82,7 @@ export default function Login() {
                                 className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.password ? 'border border-red-500' : ''}`}
                             />
                             {actionData?.fieldErrors?.password
-                                ? <p className="text-red-500 transition ease-in-out duration-300">{actionData.fieldErrors.password}</p>
+                                ? <p className="text-red-500 text-sm transition ease-in-out duration-300">{actionData.fieldErrors.password}</p>
                                 : null
                             }
                         </FormSpacer>

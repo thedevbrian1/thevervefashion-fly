@@ -1,9 +1,9 @@
 import { Link, NavLink, Outlet, isRouteErrorResponse, useRouteError } from "@remix-run/react";
 import { BriefcaseIcon, ChartIcon, ErrorIllustration, PlusIcon } from "~/components/Icon";
-import { requireUser } from "~/supabase.server";
+import { requireAdminUser } from "~/supabase.server";
 
 export async function loader({ request }) {
-    await requireUser(request);
+    await requireAdminUser(request);
     return null;
 }
 

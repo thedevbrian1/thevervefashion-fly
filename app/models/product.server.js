@@ -76,11 +76,11 @@ export async function getCategorizedProducts(request, category) {
 
 export async function deleteProduct(request, id) {
     const { supabaseClient, headers } = createClient(request);
-    const { error } = await supabaseClient
+    const { status, error } = await supabaseClient
         .from('Products')
         .delete()
         .eq('id', id);
-    return { error, headers };
+    return { status, error, headers };
 }
 
 export async function getCartProducts(request) {

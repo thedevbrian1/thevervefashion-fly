@@ -13,7 +13,7 @@ import { getCategories, getCategoryId } from "~/models/category.server";
 import { addImage, deleteImage } from "~/models/image.server";
 import { deleteProduct, getProductById } from "~/models/product.server";
 import { deleteCloudinaryImage, getCloudinaryPublicId, uploadImage } from "~/services/cloudinary.server";
-import { getSession, sessionStorage, setSuccessMessage } from "~/session.server";
+import { getSession, sessionStorage, setSuccessMessage, setWarningMessage } from "~/session.server";
 import { createClient } from "~/supabase.server";
 import { badRequest, useDoubleCheck, validatePrice, validateQuantity, validateText } from "~/utils";
 
@@ -196,11 +196,15 @@ export async function action({ request, params }) {
         }
         case 'deleteProduct': {
             console.log('Delete product.');
-            const { error, headers } = await deleteProduct(request, id);
+            const { status, error, headers } = await deleteProduct(request, id);
             if (error) {
                 throw new Error(error);
             }
-            setSuccessMessage(session, 'Deleted successfully!');
+            if (status === 204) {
+                setSuccessMessage(session, 'Deleted successfully!');
+            } else {
+                setWarningMessage(session, 'Product not deleted!');
+            }
             return redirect('/dashboard/products', {
                 headers: {
                     ...Object.fromEntries(headers.entries()), "Set-Cookie": await sessionStorage.commitSession(session)

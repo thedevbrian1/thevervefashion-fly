@@ -1,4 +1,4 @@
-import { Form, Link, NavLink, useLoaderData } from "@remix-run/react";
+import { Link, NavLink, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { CartIcon, HamburgerIcon, XIcon } from "./Icon";
@@ -56,14 +56,14 @@ export default function Nav({ navLinks, isLoggedIn }) {
                         {/* <span>{cartCount}</span> */}
                     </div>
                     {isLoggedIn
-                        ? <Form method="post" action="/logout">
+                        ? <form method="post" action="/logout">
                             <button
                                 type="submit"
                                 className="bg-brand-purple text-white px-4 py-2 rounded"
                             >
                                 Log out
                             </button>
-                        </Form>
+                        </form>
                         : null
                     }
                 </div>
@@ -117,14 +117,14 @@ export default function Nav({ navLinks, isLoggedIn }) {
                             {/*TODO: If you're logged in show logout button */}
                             {isLoggedIn
                                 ? (
-                                    <Form method="post" action="/logout">
+                                    <form method="post" action="/logout">
                                         <button
                                             type="submit"
                                             className="bg-brand-purple text-white px-4 py-2 rounded"
                                         >
                                             Log out
                                         </button>
-                                    </Form>
+                                    </form>
                                 )
                                 : (<motion.li variants={item} className="mt-4">
                                     <Link to="/login" className="bg-brand-orange hover:bg-white hover:text-black transition ease-in-out duration-300 text-white px-10 py-2">Log in</Link>
