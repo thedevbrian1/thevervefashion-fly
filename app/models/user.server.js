@@ -2,9 +2,7 @@ import { createClient } from "~/supabase.server";
 
 export async function sendResetLink(request, email) {
     const { supabaseClient, headers } = createClient(request);
-    const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-        redirectTo: 'http://localhost:3000/update-password'
-    });
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
     if (error) {
         throw new Error(error);
     }
