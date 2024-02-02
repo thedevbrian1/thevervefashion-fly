@@ -34,13 +34,13 @@ export async function loader({ request }) {
   }
 
   const products = data.product.map(product => {
-    let imageSrc = data.image.find(image => image.product_id === product.product_id)
+    let imageSrc = data.image.find(image => image.product_id === product.id)
     let details = {
-      title: product.Products.title,
+      title: product.title,
       price: product.price,
       comparePrice: product.compare_price,
       imageSrc: imageSrc?.image_src,
-      productId: product.product_id
+      productId: product.id
     };
     return details;
   });

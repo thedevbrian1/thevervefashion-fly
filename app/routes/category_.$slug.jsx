@@ -12,12 +12,12 @@ export async function loader({ request, params }) {
 
     const products = data.map(product => {
         let productItem = {
-            title: product.data.Products.title,
-            price: product.data.price,
-            comparePrice: product.data.compare_price,
+            title: product.data.product.title,
+            price: product.data.product.price,
+            comparePrice: product.data.product.compare_price,
             imageSrc: product.data.images[0]?.image_src,
-            quantity: product.data.quantity,
-            id: product.data.product_id
+            quantity: product.data.product.quantity,
+            id: product.data.product.id
         };
         return productItem;
     });

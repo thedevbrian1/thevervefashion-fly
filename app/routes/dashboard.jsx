@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, isRouteErrorResponse, useRouteError } from "@remix-run/react";
-import { BriefcaseIcon, ChartIcon, ErrorIllustration, PlusIcon } from "~/components/Icon";
+import { BriefcaseIcon, ChartIcon, ErrorIllustration, PlusIcon, ShoppingBagIcon } from "~/components/Icon";
 import { requireAdminUser } from "~/supabase.server";
 
 export async function loader({ request }) {
@@ -24,6 +24,11 @@ export default function Dashboard() {
             path: '/dashboard/products/new',
             icon: <PlusIcon />
         },
+        {
+            title: 'Orders',
+            path: '/dashboard/orders',
+            icon: <ShoppingBagIcon />
+        }
 
     ];
     return (

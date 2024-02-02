@@ -1,9 +1,8 @@
 import { json, redirect, unstable_composeUploadHandlers, unstable_createMemoryUploadHandler, unstable_parseMultipartFormData } from "@remix-run/node";
 import { Form, Link, useActionData, useFetcher, useLoaderData, useNavigation, useParams } from "@remix-run/react";
 import { useRef, useState } from "react";
-// import { TrashIcon } from "lucide-react";
 import FormSpacer from "~/components/FormSpacer";
-import { ArrowLeftIcon, PlusIcon, TrashIcon } from "~/components/Icon";
+import { ArrowLeftIcon, TrashIcon } from "~/components/Icon";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -23,6 +22,9 @@ export async function loader({ request, params }) {
         getProductById(request, Number(params.id))
     ]);
     const categories = res.data.map(category => category.title);
+
+    console.log({ product });
+
     return { product, categories };
 }
 
@@ -223,6 +225,8 @@ export async function action({ request, params }) {
 export default function Product() {
     const { product, categories } = useLoaderData();
 
+    console.log({ product });
+
     const params = useParams();
     const productId = Number(params.id);
 
@@ -255,7 +259,7 @@ export default function Product() {
             <Link to="/dashboard/products" className="flex gap-2 hover:text-brand-orange transition duration-300 ease-in-out">
                 <ArrowLeftIcon /> Back to products
             </Link>
-            <h1 className="font-semibold font-heading text-2xl lg:text-3xl mt-8">{product.data.Products.title}</h1>
+            <h1 className="font-semibold font-heading text-2xl lg:text-3xl mt-8">{product.data.product.title}</h1>
             <h2 className="order-2 md:order-1 font-medium text-lg text-gray-600 mt-4">Edit product</h2>
             <Form method="post" className="mt-4 border border-slate-200 p-6 rounded">
                 <fieldset>
@@ -268,7 +272,7 @@ export default function Product() {
                                     type='text'
                                     name='title'
                                     id='title'
-                                    defaultValue={product.data.Products.title}
+                                    defaultValue={product.data.product.title}
                                     className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.title ? 'border border-red-500' : ''}`}
                                 />
                                 {actionData?.fieldErrors?.title
@@ -281,7 +285,7 @@ export default function Product() {
                                 <Textarea
                                     name='description'
                                     id='description'
-                                    defaultValue={product.data.Products.description}
+                                    defaultValue={product.data.product.description}
                                     className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.description ? 'border border-red-500' : ''}`}
                                 />
                                 {actionData?.fieldErrors?.description
@@ -294,7 +298,7 @@ export default function Product() {
                                 <Select
                                     name="category"
                                     id="category"
-                                    defaultValue={product.data.Products.Categories.title}
+                                    defaultValue={product.data.product.Categories.title}
                                     className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.category ? 'border border-red-500' : ''}`}
                                 >
                                     <SelectTrigger className="w-[180px]">
@@ -313,7 +317,7 @@ export default function Product() {
                                     type='number'
                                     name='quantity'
                                     id='quantity'
-                                    defaultValue={product.data.quantity}
+                                    defaultValue={product.data.product.quantity}
                                     className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.quantity ? 'border border-red-500' : ''}`}
                                 />
                                 {actionData?.fieldErrors?.quantity
@@ -456,7 +460,7 @@ export default function Product() {
                                     type='number'
                                     name='price'
                                     id='price'
-                                    defaultValue={product.data.price}
+                                    defaultValue={product.data.product.price}
                                     min="1"
                                     className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.price ? 'border border-red-500' : ''}`}
                                 />
@@ -471,7 +475,7 @@ export default function Product() {
                                     type='number'
                                     name='compare-price'
                                     id='compare'
-                                    defaultValue={product.data.compare_price}
+                                    defaultValue={product.data.product.compare_price}
                                     min="1"
                                     className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.comparePrice ? 'border border-red-500' : ''}`}
                                 />
@@ -486,7 +490,7 @@ export default function Product() {
                                     type='number'
                                     name='purchase-price'
                                     id='purchase-price'
-                                    defaultValue={product.data.purchase_price}
+                                    defaultValue={product.data.product.purchase_price}
                                     min="1"
                                     className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.purchasePrice ? 'border border-red-500' : ''}`}
                                 />

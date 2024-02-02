@@ -31,6 +31,7 @@ export async function action({ request }) {
 export default function Product() {
     const colours = ['Black', 'Red', 'Green'];
     const { product } = useLoaderData();
+
     return (
         <main className="mt-16 px-4 lg:px-0 lg:max-w-5xl mx-auto grid lg:grid-cols-2 gap-4 lg:gap-8">
             <div>
@@ -39,8 +40,8 @@ export default function Product() {
             </div>
             <div>
                 {/* Description */}
-                <h1 className="text-2xl lg:text-3xl">{product.Products.title}</h1>
-                <p className="text-brand-orange mt-2">Ksh {product.price}</p>
+                <h1 className="text-2xl lg:text-3xl">{product.product.title}</h1>
+                <p className="text-brand-orange mt-2">Ksh {product.product.price}</p>
                 <Form method="post" className="space-y-4 mt-6">
                     <fieldset>
                         <legend className="text-sm uppercase">
@@ -93,7 +94,7 @@ export default function Product() {
                         </Select>
 
                     </div>
-                    {product.quantity > 0
+                    {product.product.quantity > 0
                         ? <button type="submit" className="bg-brand-orange text-white px-8 py-2 rounded">
                             Add to cart
                         </button>
@@ -101,7 +102,7 @@ export default function Product() {
 
                 </Form>
                 <p className="uppercase text-sm mt-8">Description</p>
-                <p className="mt-2">{product.Products.description}</p>
+                <p className="mt-2">{product.product.description}</p>
             </div>
         </main>
     );

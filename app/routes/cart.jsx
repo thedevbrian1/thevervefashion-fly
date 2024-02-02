@@ -13,13 +13,13 @@ export async function loader({ request }) {
     const cartItems = session.get('cartItems') ?? [];
 
     const products = data.product?.map(product => {
-        let imageSrc = data.images.find(image => image.product_id === product.product_id);
+        let imageSrc = data.images.find(image => image.product_id === product.id);
         let details = {
-            title: product.Products.title,
+            title: product.title,
             price: product.price,
             imageSrc: imageSrc?.image_src,
-            count: cartItems.find(cartItem => cartItem.id === product.product_id).count,
-            productId: product.product_id
+            count: cartItems.find(cartItem => cartItem.id === product.id).count,
+            productId: product.id
         };
         return details;
     });

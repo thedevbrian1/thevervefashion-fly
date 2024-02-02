@@ -84,19 +84,18 @@ export async function action({ request }) {
     // Steps to add item to the database
     // 1. Get category id
     // 2. Add product with category id
-    // 3. Add product item with product id
-    // 4. Add image(s) with product id
-    // 5. Add variant with product id
-    // 6. Add variation option with variation id
+    // 3. Add image(s) with product id
+    // 4. Add variant with product id
+    // 5. Add variation option with variation id
 
 
     const { data: categories, error: categoryError, headers: categoryHeaders } = await getCategoryId(request, category);
     const categoryId = categories[0].id;
 
-    const { data: product, error: productError, headers: productHeaders } = await addProduct(request, title, description, categoryId);
+    const { data: product, error: productError, headers: productHeaders } = await addProduct(request, title, description, categoryId, price, comparePrice, purchasePrice, quantity);
     const productId = product[0].id;
 
-    const { data: productItem, error: productItemError, headers: productItemHeaders } = await addProductItem(request, productId, quantity, price, comparePrice, purchasePrice);
+    // const { data: productItem, error: productItemError, headers: productItemHeaders } = await addProductItem(request, productId, quantity, );
 
     const imageResponse = await Promise.all(image.map(async (image) => {
         const { data, error, headers } = await addImage(request, image, productId);
@@ -128,8 +127,6 @@ export async function action({ request }) {
     const allHeaders = {
         ...Object.fromEntries(categoryHeaders.entries()),
         ...Object.fromEntries(productHeaders.entries()),
-        ...Object.fromEntries(productItemHeaders.entries()),
-        // ...Object.fromEntries(mergedImageHeaders.entries()),
         ...Object.fromEntries(sizeVariantHeaders.entries()),
         ...Object.fromEntries(sizeVariantValueHeaders.entries()),
         ...Object.fromEntries(colourVariantHeaders.entries()),
@@ -143,7 +140,6 @@ export async function action({ request }) {
     });
 }
 
-// FIXME: Image upload not working
 export default function NewProduct() {
     const actionData = useActionData();
     const navigation = useNavigation();

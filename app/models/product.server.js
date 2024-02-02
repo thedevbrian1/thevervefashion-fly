@@ -4,13 +4,17 @@ import { getImage, getImages } from "./image.server";
 import { getCategoryId } from "./category.server";
 import { getSession } from "~/session.server";
 
-export async function addProduct(request, title, description, categoryId) {
+export async function addProduct(request, title, description, categoryId, price, comparePrice, purchasePrice, quantity) {
     const { supabaseClient, headers } = createClient(request);
     const { data, error } = await supabaseClient.from('Products').insert([
         {
             title,
             description,
-            category_id: categoryId
+            category_id: Number(categoryId),
+            price: Number(price),
+            compare_price: Number(comparePrice),
+            purchase_price: Number(purchasePrice),
+            quantity: Number(quantity)
         }
     ]).select();
     return { data, error, headers };
@@ -18,28 +22,30 @@ export async function addProduct(request, title, description, categoryId) {
 
 export async function getProductById(request, id) {
     const { supabaseClient, headers } = createClient(request);
-    // 1. Get product and productId
-    // 2. Get product item
+    // 1. Get product 
     // 3. Get images 
     // 4. Get variations
     const [
-        { data: product, error: productError },
+        { data: item, error: itemError },
         { data: variation, error: variationError },
         { data: images, error: imagesError }
     ] = await Promise.all([
         supabaseClient
-            .from('Product_item')
-            .select(`quantity,price,compare_price,purchase_price,product_id, Products(title,description,Categories(title))`)
-            .eq('product_id', Number(id)),
+            .from('Products')
+            .select(`id,title,description,quantity,price,compare_price,purchase_price, Categories(title)`)
+            .eq('id', Number(id)),
         getVariationById(request, Number(id)),
         getImage(request, Number(id))
     ]);
 
 
     // TODO: Handle both errors
-    const data = { ...product[0], variation, images }
 
-    return { data, error: productError, headers };
+    const product = item[0];
+
+    const data = { product, variation, images }
+
+    return { data, error: itemError, headers };
 }
 
 export async function getProducts(request) {
@@ -49,10 +55,13 @@ export async function getProducts(request) {
         { data: image, error: imageError }
     ] = await Promise.all([
         supabaseClient
-            .from('Product_item')
-            .select('price,compare_price,product_id,Products(title)'),
+            .from('Products')
+            .select('id,title,price,compare_price'),
         getImages(request)
     ]);
+
+    // console.log({ product });
+
     const data = { product, image };
     return { data, error: productError, headers };
 }
@@ -91,7 +100,7 @@ export async function getCartProducts(request) {
     const { supabaseClient, headers } = createClient(request);
 
     const [{ data: product, error: productError }, { data: images, error: imageError }] = await Promise.all([
-        supabaseClient.from('Product_item').select('price,product_id,Products(title)').in('product_id', cartItemIds),
+        supabaseClient.from('Products').select('id,title,price').in('id', cartItemIds),
         supabaseClient.from('Images').select('image_src,product_id').in('product_id', cartItemIds)
     ]);
     if (productError) {

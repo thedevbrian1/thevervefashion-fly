@@ -15,12 +15,12 @@ export async function loader({ request }) {
     const cartItems = session.get('cartItems');
 
     const products = data.product.map(product => {
-        let imageSrc = data.images.find(image => image.product_id === product.product_id);
+        let imageSrc = data.images.find(image => image.product_id === product.id);
         let details = {
-            title: product.Products.title,
+            title: product.title,
             price: product.price,
             imageSrc: imageSrc?.image_src,
-            count: cartItems.find(cartItem => cartItem.id === product.product_id).count
+            count: cartItems.find(cartItem => cartItem.id === product.id).count
         };
         return details;
     });
@@ -29,10 +29,8 @@ export async function loader({ request }) {
         headers
     });
 }
+
 export async function action({ request }) {
-
-
-    // Validation
     const formData = await request.formData();
     const name = formData.get('name');
     // const mpesa = formData.get('mpesa');
@@ -46,6 +44,7 @@ export async function action({ request }) {
         email: validateEmail(email)
     };
 
+    // Return errors if any
     if (Object.values(fieldErrors).some(Boolean)) {
         return badRequest({ fieldErrors });
     }
@@ -56,12 +55,13 @@ export async function action({ request }) {
     const cartItems = session.get('cartItems');
 
     const products = data.product.map(product => {
-        let imageSrc = data.images.find(image => image.product_id === product.product_id);
+        let imageSrc = data.images.find(image => image.product_id === product.id);
         let details = {
-            title: product.Products.title,
+            id: product.id,
+            title: product.title,
             price: product.price,
             imageSrc: imageSrc?.image_src,
-            count: cartItems.find(cartItem => cartItem.id === product.product_id).count
+            count: cartItems.find(cartItem => cartItem.id === product.id).count
         };
         return details;
     });
@@ -81,8 +81,6 @@ export default function Checkout() {
     const navigation = useNavigation();
 
     const isSubmitting = navigation.state === 'submitting';
-
-    console.log({ products });
 
     const subTotals = products.map(product => product.price * product.count);
     const total = subTotals.reduce((prev, current) => prev + current, 0);
@@ -114,7 +112,7 @@ export default function Checkout() {
                             <h2 className="font-semibold">Products ordered</h2>
                             <ol className="grid divide-y mt-2">
                                 {products.map(product => (
-                                    <li className="flex gap-2 items-center py-3">
+                                    <li className="flex gap-2 items-center py-3" key={product.id}>
                                         <img src={product.imageSrc} alt="" className="w-16 h-16 rounded-full object-cover" />
                                         <span>{product.title} ({product.count})<br /> <span className="font-semibold">Ksh {product.price * product.count}</span></span>
                                     </li>
