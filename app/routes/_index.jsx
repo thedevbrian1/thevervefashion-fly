@@ -33,8 +33,8 @@ export async function loader({ request }) {
     let imageSrc = data.image.find(image => image.product_id === product.id)
     let details = {
       title: product.title,
-      price: product.price,
-      comparePrice: product.compare_price,
+      price: product?.price,
+      comparePrice: product?.compare_price,
       imageSrc: imageSrc?.image_src,
       productId: product.id
     };

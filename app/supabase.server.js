@@ -12,7 +12,7 @@ export async function requireAdminUser(request) {
     const user = session?.user;
     // console.log({ user });
 
-    if (user.email === process.env.ADMIN_EMAIL || user.email === process.env.ADMIN_EMAIL_2) {
+    if (user?.email === process.env.ADMIN_EMAIL || user?.email === process.env.ADMIN_EMAIL_2) {
         return { user, headers };
     }
     throw await logout(request);
