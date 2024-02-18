@@ -101,7 +101,6 @@ export async function action({ request }) {
 
 export default function Products() {
   const { products } = useLoaderData();
-  console.log({ products });
 
   return (
     <main className="pt-16 px-6 lg:max-w-7xl mx-auto">

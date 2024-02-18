@@ -27,7 +27,7 @@ export async function loader({ request, params }) {
         // Replace image_src urls with optimized urls
         let images = product.images.map(image => {
             let newImageUrl;
-            newImageUrl = image.image_src.substring(0, uploadIndex + 7) + '/q_auto,f_auto,w_auto,ar_4:3,dpr_auto,c_fill' + image.image_src.substring(uploadIndex + 7);
+            newImageUrl = image.image_src.substring(0, uploadIndex + 7) + '/q_auto,f_auto,w_auto,g_auto,ar_4:3,dpr_auto,c_fill' + image.image_src.substring(uploadIndex + 7);
             return { image_src: newImageUrl, id: image.id };
         });
         product.images = images;
@@ -93,6 +93,7 @@ export default function Product() {
                         </div>
                     </fieldset>
                     <div>
+                        {/* TODO: You should not be able to order more products than the available quantity */}
                         <Label htmlFor="quantity">Quantity</Label>
                         <div className="flex gap-1 mt-1">
                             <button type="submit" name="_action" value="subtract" className="bg-gray-100 px-2 rounded">-</button>
