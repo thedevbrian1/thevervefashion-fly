@@ -31,7 +31,11 @@ async function uploadImage(data) {
 export { uploadImage };
 
 export async function deleteCloudinaryImage(id) {
-    return cloudinary.v2.uploader.destroy(id);
+    return cloudinary.v2.uploader.destroy(id, { invalidate: true });
+}
+
+export async function deleteCloudinaryImages(ids) {
+    return cloudinary.v2.api.delete_resources(ids, { invalidate: true });
 }
 
 export function getCloudinaryPublicId(imageUrl) {

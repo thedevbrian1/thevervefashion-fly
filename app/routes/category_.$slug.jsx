@@ -22,6 +22,18 @@ export async function loader({ request, params }) {
         return productItem;
     });
 
+    const imageUrl = products[0]?.imageSrc;
+    const uploadIndex = imageUrl?.indexOf('/upload');
+
+    if (uploadIndex !== -1) {
+        // Replace image_src urls with optimized urls
+        products.forEach(product => {
+            let newImageUrl;
+            newImageUrl = product.imageSrc?.substring(0, uploadIndex + 7) + '/q_auto,f_auto,h_240,g_auto,ar_4:3,dpr_auto,c_auto' + product.imageSrc?.substring(uploadIndex + 7);
+            product.imageSrc = newImageUrl
+        });
+    }
+
     return json({ products, category }, {
         headers
     });

@@ -11,7 +11,7 @@ import { Textarea } from "~/components/ui/textarea";
 import { getCategories, getCategoryId } from "~/models/category.server";
 import { addImage, deleteImage } from "~/models/image.server";
 import { deleteProduct, getProductById } from "~/models/product.server";
-import { deleteCloudinaryImage, getCloudinaryPublicId, uploadImage } from "~/services/cloudinary.server";
+import { deleteCloudinaryImage, deleteCloudinaryImages, getCloudinaryPublicId, uploadImage } from "~/services/cloudinary.server";
 import { getSession, sessionStorage, setSuccessMessage, setWarningMessage } from "~/session.server";
 import { createClient } from "~/supabase.server";
 import { badRequest, useDoubleCheck, validatePrice, validateQuantity, validateText } from "~/utils";
@@ -23,7 +23,18 @@ export async function loader({ request, params }) {
     ]);
     const categories = res.data.map(category => category.title);
 
-    console.log({ product });
+    const imageUrl = product.data.images[0]?.image_src;
+    const uploadIndex = imageUrl?.indexOf('/upload');
+
+    if ((uploadIndex !== -1) && product.data.images.length > 0) {
+        // Replace image_src urls with optimized urls
+        let images = product.data.images.map(image => {
+            let newImageUrl;
+            newImageUrl = image.image_src?.substring(0, uploadIndex + 7) + '/q_auto,f_auto,h_224,g_auto,ar_4:3,dpr_auto,c_auto' + image.image_src?.substring(uploadIndex + 7);
+            return { image_src: newImageUrl, id: image.id };
+        });
+        product.data.images = images;
+    }
 
     return { product, categories };
 }
@@ -198,6 +209,36 @@ export async function action({ request, params }) {
         }
         case 'deleteProduct': {
             console.log('Delete product.');
+
+            // TODO: Use Promise.all instead
+            // await Promise.all([
+            //     deleteProduct(request, id),
+
+            // ])
+
+
+            // Delete image(s) from cloudinary
+            const product = await getProductById(request, id);
+            const publicIds = await Promise.all(
+                product.data.images.map((image) => {
+                    const publicId = getCloudinaryPublicId(image.image_src);
+                    return publicId;
+                })
+            );
+
+            console.log({ publicIds });
+
+            const deleted = await deleteCloudinaryImages(publicIds);
+
+            console.log({ deleted });
+            const deletedValues = Object.values(deleted.deleted);
+            let isDeletedFromCloudinary = deletedValues.every(value => value === 'deleted');
+
+            // if (isDeletedFromCloudinary) {
+            //     setSuccessMessage(session, 'Deleted from cloudinary');
+            // }
+
+            // Delete image from db
             const { status, error, headers } = await deleteProduct(request, id);
             if (error) {
                 throw new Error(error);
@@ -225,8 +266,6 @@ export async function action({ request, params }) {
 export default function Product() {
     const { product, categories } = useLoaderData();
 
-    console.log({ product });
-
     const params = useParams();
     const productId = Number(params.id);
 
@@ -253,6 +292,7 @@ export default function Product() {
             reader.readAsDataURL(files[i]);
         }
     }
+
     return (
         <div className="lg:max-w-4xl 2xl:max-w-6xl mt-8 md:mt-12">
             {/* TODO: Implement cancel functionality */}
@@ -407,6 +447,7 @@ export default function Product() {
                         {images.length > 0 && (
                             <div className="mt-4">
                                 <h3 className="text-gray-800">Selected images:</h3>
+                                {/* FIXME: Do not delete the image immediately to reduce the content shift */}
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4  mt-2">
                                     {images.map((image, index) => (
                                         <div className="w-full h-40" key={index}>
@@ -627,7 +668,7 @@ function DeletableImage({ imageSrc, id }) {
     const isSubmitting = fetcher.state !== 'idle';
 
     return (
-        <div className={`w-full h-40 relative rounded ${isSubmitting ? 'opacity-50' : ''}`}>
+        <div className={`w-full h-48 lg:h-56 relative rounded ${isSubmitting ? 'opacity-50' : ''}`}>
             {/* TODO: Optimistic delete */}
             <img src={imageSrc} alt="" className="w-full h-full object-cover" />
             <fetcher.Form method="post" className="absolute right-2 top-2 text-red-500 hover:text-red-700 transition ease-in-out duration-300">

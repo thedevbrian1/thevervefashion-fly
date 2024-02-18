@@ -20,6 +20,19 @@ export async function loader({ request, params }) {
         throw new Error(error);
     }
 
+    const imageUrl = product.images[0]?.image_src;
+    const uploadIndex = imageUrl?.indexOf('/upload');
+
+    if ((uploadIndex !== -1) && product.images.length > 0) {
+        // Replace image_src urls with optimized urls
+        let images = product.images.map(image => {
+            let newImageUrl;
+            newImageUrl = image.image_src.substring(0, uploadIndex + 7) + '/q_auto,f_auto,w_auto,ar_4:3,dpr_auto,c_fill' + image.image_src.substring(uploadIndex + 7);
+            return { image_src: newImageUrl, id: image.id };
+        });
+        product.images = images;
+    }
+
     return json({ product }, {
         headers
     });
@@ -28,6 +41,7 @@ export async function loader({ request, params }) {
 export async function action({ request }) {
     return null;
 }
+
 export default function Product() {
     const colours = ['Black', 'Red', 'Green'];
     const { product } = useLoaderData();
@@ -36,7 +50,9 @@ export default function Product() {
         <main className="mt-16 px-4 lg:px-0 lg:max-w-5xl mx-auto grid lg:grid-cols-2 gap-4 lg:gap-8">
             <div>
                 {/* Images */}
-                <img src={product.images[0]?.image_src} alt="" className="aspect-[4/3] object-cover" />
+                {/* TODO: Reduce size of images further */}
+                {/* TODO: Use eager loading for images */}
+                <img src={product.images[0]?.image_src} alt="" className="w-full h-full aspect-[4/3] object-cover" />
             </div>
             <div>
                 {/* Description */}

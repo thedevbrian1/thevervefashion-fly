@@ -17,6 +17,7 @@ export async function loader({ request }) {
     const products = data.product.map(product => {
         let imageSrc = data.images.find(image => image.product_id === product.id);
         let details = {
+            id: product.id,
             title: product.title,
             price: product.price,
             imageSrc: imageSrc?.image_src,
