@@ -10,6 +10,7 @@ export default function ProductCard({ imageSrc, children, id }) {
                 ? <img
                     src={imageSrc}
                     alt=""
+                    loading="lazy"
                     className="object-cover h-60 aspect-[4/3] w-full"
                 />
                 : <div className="h-60  bg-gray-100 grid place-items-center">
