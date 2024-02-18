@@ -72,7 +72,7 @@ export async function action({ request }) {
         title: validateText(title),
         description: validateText(description),
         price: validatePrice(Number(price)),
-        comparePrice: validatePrice(Number(comparePrice)),
+        ...(comparePrice && { comparePrice: validatePrice(Number(comparePrice)) }),
         purchasePrice: validatePrice(Number(purchasePrice)),
         colour: validateText(colour)
     };
@@ -285,11 +285,11 @@ export default function NewProduct() {
                             }
                         </FormSpacer>
                         <FormSpacer>
-                            <Label htmlFor='compare'>Compare-at price</Label>
+                            <Label htmlFor='compare-price'>Compare-at price</Label>
                             <Input
                                 type='number'
                                 name='compare-price'
-                                id='compare'
+                                id='compare-price'
                                 placeholder='0'
                                 min="1"
                             />

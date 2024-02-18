@@ -101,6 +101,7 @@ export async function action({ request }) {
 
 export default function Products() {
   const { products } = useLoaderData();
+  console.log({ products });
 
   return (
     <main className="pt-16 px-6 lg:max-w-7xl mx-auto">
@@ -131,7 +132,15 @@ export default function Products() {
                         <h3 className="text-xl">{product.title}</h3>
                         {/* <span>{product.rating}</span> */}
                       </div>
-                      <p className="flex gap-4 items-center"><s className="text-gray-400 text-sm">Ksh {product.comparePrice}</s> <span>Ksh {product.price}</span></p>
+                      <p className="flex gap-4 items-center">
+                        {product.comparePrice ? (
+                          <s className="text-gray-400 text-sm">Ksh {product.comparePrice}</s>
+                        )
+                          : null
+                        }
+                        {/* <s className="text-gray-400 text-sm">Ksh {product.comparePrice}</s> */}
+                        <span>Ksh {product.price}</span>
+                      </p>
                       <Form method="post">
                         <input type="hidden" name="id" value={product.productId} />
                         <Button

@@ -52,7 +52,12 @@ export default function Product() {
                 {/* Images */}
                 {/* TODO: Reduce size of images further */}
                 {/* TODO: Use eager loading for images */}
-                <img src={product.images[0]?.image_src} alt="" className="w-full h-full aspect-[4/3] object-cover" />
+                <img
+                    src={product.images[0]?.image_src}
+                    alt=""
+                    loading="eager"
+                    className="w-full h-full aspect-[4/3] object-cover"
+                />
             </div>
             <div>
                 {/* Description */}
