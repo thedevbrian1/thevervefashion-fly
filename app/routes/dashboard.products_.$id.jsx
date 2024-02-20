@@ -23,6 +23,7 @@ export async function loader({ request, params }) {
     ]);
     const categories = res.data.map(category => category.title);
 
+
     const imageUrl = product.data.images[0]?.image_src;
     const uploadIndex = imageUrl?.indexOf('/upload');
 
@@ -174,34 +175,79 @@ export async function action({ request, params }) {
         case 'variant': {
             console.log('Variant');
             if (intent === 'save') {
-                const size = formData.get('size');
-                const colour = formData.get('colour');
 
-                const fieldErrors = {
-                    colour: validateText(colour)
-                };
+                // Separate current values in the db and new values
+
+                let currentVariations = {};
+                let newVariations = {};
+
+                for (let [key, value] of formData.entries()) {
+                    // if (key.startsWith('colour-') || key.startsWith('size-') || key.startsWith('newsize-') || key.startsWith('newcolour-')) {
+                    //     variations[key] = value;
+                    // }
+                    if (key.startsWith('size-') || key.startsWith('colour-')) {
+                        currentVariations[key] = value;
+                    } else if (key.includes('new')) {
+                        newVariations[key] = value;
+                    }
+                }
+
+                // Validate all the input fields and return errors 
+
+                let fieldErrors = {};
+
+                for (let [key, value] of Object.entries(currentVariations)) {
+                    fieldErrors[key] = validateText(value);
+                }
+
+                for (let [key, value] of Object.entries(newVariations)) {
+                    fieldErrors[key] = validateText(value);
+                }
 
                 if (Object.values(fieldErrors).some(Boolean)) {
                     return badRequest({ fieldErrors });
                 }
 
-                const { data: variation, error: variationError } = await supabaseClient
-                    .from('Variations')
-                    .select('id')
-                    .eq('product_id', id);
+                let currentVariationItems = Object.entries(currentVariations).map(variation => {
+                    let item = variation[0].split('-', 2);
+                    return { title: item[0], value: variation[1], id: item[1] };
+                });
 
-                const values = [size, colour];
+                console.log({ currentVariationItems });
 
-                const optionValues = await Promise.all(variation.map(async (option, index) => {
-                    const { data: variationOption, error: optionError } = await supabaseClient
-                        .from('Variation_options')
-                        .update({ value: values[index] })
-                        .eq('variation_id', option.id)
-                        .select();
-                    return { variationOption, optionError };
-                }));
+                // return json({ currentVariations });
 
-                setSuccessMessage(session, 'Updated successfully!');
+
+                // Add changes to the db
+
+                // Update the current items in the database
+                const [res] = await Promise.all(
+                    currentVariationItems.map(async (item) => {
+                        const { status, error } = await supabaseClient
+                            .from('Variations')
+                            .update({ value: item.value })
+                            .match({ 'id': item.id })
+                        // .eq({ 'id': Number(item.id) })
+                        // .select();
+                        return { status, error };
+                    })
+                );
+
+                console.log({ res });
+
+                // const { data: variationItem, error: variationItemError } = await supabaseClient
+                //     .from('Variations')
+                //     .upsert(structuredItems, { onConflict: 'id' })
+                //     .select();
+
+                // if (variationItemError) {
+                //     throw new Error(variationItemError);
+                // }
+
+                // console.log({ variationItem });
+                if (res.status === 204) {
+                    setSuccessMessage(session, 'Updated successfully!');
+                }
             } else if (intent === 'cancel') {
                 return { ok: true };
             }
@@ -266,16 +312,40 @@ export async function action({ request, params }) {
 export default function Product() {
     const { product, categories } = useLoaderData();
 
+    console.log({ product });
+
     const params = useParams();
     const productId = Number(params.id);
 
     const actionData = useActionData();
+    console.log({ actionData });
+
+    // let variations;
+    // if (actionData?.variations) {
+    //     variations = Object.entries(actionData?.variations);
+    // }
+
+    // console.log({ variations });
+
+
     const navigation = useNavigation();
     const doubleCheckDelete = useDoubleCheck();
+
     const [images, setImages] = useState([]);
+    const [size, setSize] = useState([]);
+    const [colour, setColour] = useState([]);
+
+    // console.log({ size });
+    // console.log({ colour });
+
     const addImageRef = useRef(null);
 
     const isSubmitting = navigation.state !== 'idle';
+
+    const sizes = product.data.variation.filter(variation => variation.title === 'size');
+    // console.log({ sizes });
+    const colours = product.data.variation.filter(variation => variation.title === 'colour');
+    // console.log({ colours });
 
     function handleImageChange(event) {
         const files = event.target.files;
@@ -291,6 +361,22 @@ export default function Product() {
             };
             reader.readAsDataURL(files[i]);
         }
+    }
+
+    function handleSizeDelete(id) {
+        // let newSize = [...size];
+        // newSize.splice(newSize.indexOf(sizeInput), 1);
+        // setSize(newSize);
+        let newSize = size.filter(item => item.id !== id);
+        setSize(newSize);
+    }
+
+    function handleColourDelete(id) {
+        // let newSize = [...size];
+        // newSize.splice(newSize.indexOf(sizeInput), 1);
+        // setSize(newSize);
+        let newColour = colour.filter(item => item.id !== id);
+        setColour(newColour);
     }
 
     return (
@@ -571,49 +657,158 @@ export default function Product() {
                     {/* TODO: Add variants */}
                     <div className="mt-2">
                         <div className="grid md:grid-cols-2 gap-4">
-                            <FormSpacer>
-                                <Label htmlFor='size'>Size</Label>
-                                <Select
-                                    name="size"
-                                    id="size"
-                                    defaultValue={product.data.variation.variationValues[0][0].value}
-                                    className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.size ? 'border border-red-500' : ''}`}
+                            <div>
+                                {/* Sizes in the database */}
+                                {sizes.map((size, index) => (
+                                    <FormSpacer key={size.id}>
+                                        <Label htmlFor={size.id}>Size</Label>
+                                        <Select
+                                            name={`size-${size.id}`}
+                                            id={size.id}
+                                            defaultValue={size.value}
+                                            className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.[`size-${size.id}`] ? 'border border-red-500' : ''}`}
+                                        >
+                                            <SelectTrigger className="w-[180px]">
+                                                <SelectValue placeholder="--Select size--" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="xs">XS</SelectItem>
+                                                <SelectItem value="sm">SM</SelectItem>
+                                                <SelectItem value="md">MD</SelectItem>
+                                                <SelectItem value="lg">LG</SelectItem>
+                                                <SelectItem value="xl">XL</SelectItem>
+                                                <SelectItem value="xxl">XXL</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <input
+                                            type="hidden"
+                                            name="variationId"
+                                            value={size.id}
+                                        />
+                                    </FormSpacer>
+                                ))}
+
+                                <div className="space-y-2 mt-2">
+                                    {/* Added size inputs */}
+                                    {size.length > 0
+                                        ? (
+                                            size.map((sizeInput) => (
+                                                <div
+                                                    className="relative max-w-fit"
+                                                    key={sizeInput.id}
+                                                >
+                                                    <span
+                                                        className="absolute top-1 right-1 text-red-500"
+                                                        onClick={() => handleSizeDelete(sizeInput.id)}
+                                                    >
+                                                        <TrashIcon />
+                                                    </span>
+                                                    <FormSpacer>
+                                                        <Label htmlFor={sizeInput.id}>Size</Label>
+                                                        <Select
+                                                            name={`newsize-${sizeInput.id}`}
+                                                            id={sizeInput.id}
+                                                            defaultValue={product.data.variation[0].value}
+                                                            className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.size ? 'border border-red-500' : ''}`}
+                                                        >
+                                                            <SelectTrigger className="w-[180px]">
+                                                                <SelectValue placeholder="--Select size--" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="xs">XS</SelectItem>
+                                                                <SelectItem value="sm">SM</SelectItem>
+                                                                <SelectItem value="md">MD</SelectItem>
+                                                                <SelectItem value="lg">LG</SelectItem>
+                                                                <SelectItem value="xl">XL</SelectItem>
+                                                                <SelectItem value="xxl">XXL</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </FormSpacer>
+                                                </div>
+                                            ))
+                                        )
+                                        : null
+                                    }
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setSize([...size, {
+                                        id: crypto.randomUUID(),
+                                        // name: `size-${size.length + 1}`
+                                        name: `newsize-${crypto.randomUUID()}`
+                                    }])}
+                                    className="text-sm text-blue-500 mt-2"
                                 >
-                                    <SelectTrigger className="w-[180px]">
-                                        <SelectValue placeholder="--Select size--" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="xs">XS</SelectItem>
-                                        <SelectItem value="sm">SM</SelectItem>
-                                        <SelectItem value="md">MD</SelectItem>
-                                        <SelectItem value="lg">LG</SelectItem>
-                                        <SelectItem value="xl">XL</SelectItem>
-                                        <SelectItem value="xxl">XXL</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </FormSpacer>
-                            <FormSpacer>
-                                <Label htmlFor="colour">Colour</Label>
-                                <Input
-                                    type='text'
-                                    name='colour'
-                                    id='colour'
-                                    defaultValue={product.data.variation.variationValues[1][0].value}
-                                    className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.colour ? 'border border-red-500' : ''}`}
-                                />
-                                {actionData?.fieldErrors?.colour
-                                    ? <p className="text-red-500 text-sm">{actionData.fieldErrors.colour}</p>
-                                    : null
-                                }
-                            </FormSpacer>
-                            {/* <button
-                                type="button"
-                                onClick={() => setAddSize(true)}
-                                className="text-sm text-blue-500"
-                            >
-                                Add size
-                            </button> */}
+                                    Add size
+                                </button>
+                            </div>
+                            <div>
+                                {/* Colours from the database */}
+                                {colours.map((colour, index) => (
+                                    <FormSpacer key={colour.id}>
+                                        <Label htmlFor={colour.id}>Colour</Label>
+                                        <Input
+                                            type='text'
+                                            name={`colour-${colour.id}`}
+                                            id={colour.id}
+                                            defaultValue={colour.value}
+                                            className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.[`colour-${colour.id}`] ? 'border border-red-500' : ''}`}
+                                        />
+                                        {actionData?.fieldErrors?.[`colour-${colour.id}`]
+                                            ? <p className="text-red-500 text-sm">{actionData.fieldErrors?.[`colour-${colour.id}`]}</p>
+                                            : null
+                                        }
+                                    </FormSpacer>
+                                ))}
+                                <div className="space-y-2 mt-2">
+                                    {colour.length > 0
+                                        ? (
+                                            colour.map((colourInput, index) => (
+                                                <div
+                                                    className="relative"
+                                                    key={colourInput.id}
+                                                >
+                                                    <span
+                                                        className="absolute top-1 right-1 text-red-500"
+                                                        onClick={() => handleColourDelete(colourInput.id)}
+                                                    >
+                                                        <TrashIcon />
+                                                    </span>
+                                                    <FormSpacer>
+                                                        <Label htmlFor={colourInput.id}>Colour</Label>
+                                                        <Input
+                                                            type='text'
+                                                            name={`newcolour-${colourInput.id}`}
+                                                            id={colourInput.id}
+                                                            defaultValue={product.data.variation[1].value}
+                                                            className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.[`colour-${colourInput.id}`] ? 'border border-red-500' : ''}`}
+                                                        />
+                                                        {/* FIXME: Highlight the correct input error field */}
+                                                        {actionData?.fieldErrors?.[`colour-${colourInput.id}`]
+                                                            ? <p className="text-red-500 text-sm">{actionData.fieldErrors?.[`colour-${colourInput.id}`]
+                                                            }
+                                                            </p>
+                                                            : null
+                                                        }
+                                                    </FormSpacer>
+                                                </div>
+                                            ))
+                                        )
+                                        : null
+                                    }
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setColour([...colour, {
+                                        id: crypto.randomUUID(),
+                                    }])}
+                                    className="text-sm text-blue-500 mt-2"
+                                >
+                                    Add colour
+                                </button>
+                            </div>
                         </div>
+
                         <div className="flex gap-2 justify-end mt-4">
                             <input type="hidden" name="_action" value="variant" />
                             <Button

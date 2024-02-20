@@ -27,7 +27,7 @@ export async function getProductById(request, id) {
     // 4. Get variations
     const [
         { data: item, error: itemError },
-        { data: variation, error: variationError },
+        { data: variation },
         { data: images, error: imagesError }
     ] = await Promise.all([
         supabaseClient
@@ -38,6 +38,9 @@ export async function getProductById(request, id) {
         getImage(request, Number(id))
     ]);
 
+    if (itemError) {
+        throw new Error(itemError);
+    }
 
     // TODO: Handle both errors
 
@@ -45,7 +48,7 @@ export async function getProductById(request, id) {
 
     const data = { product, variation, images }
 
-    return { data, error: itemError, headers };
+    return { data, headers };
 }
 
 export async function getProducts(request) {
