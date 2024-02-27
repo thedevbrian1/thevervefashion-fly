@@ -215,12 +215,27 @@ export async function action({ request, params }) {
 
                 console.log({ currentVariationItems });
 
-                // return json({ currentVariations });
+
+
+                let newVariationItems = Object.entries(newVariations).map(variation => {
+                    let item = variation[0].split('-', 1)[0].slice(3);
+                    console.log({ item });
+
+                    return { title: item, value: variation[1], product_id: id };
+                });
+
+                console.log({ newVariations });
+                console.log({ newVariationItems });
+                return null;
+
+
+
 
 
                 // Add changes to the db
 
                 // Update the current items in the database
+
                 const [res] = await Promise.all(
                     currentVariationItems.map(async (item) => {
                         const { status, error } = await supabaseClient
@@ -235,19 +250,26 @@ export async function action({ request, params }) {
 
                 console.log({ res });
 
-                // const { data: variationItem, error: variationItemError } = await supabaseClient
-                //     .from('Variations')
-                //     .upsert(structuredItems, { onConflict: 'id' })
-                //     .select();
-
-                // if (variationItemError) {
-                //     throw new Error(variationItemError);
-                // }
-
-                // console.log({ variationItem });
                 if (res.status === 204) {
                     setSuccessMessage(session, 'Updated successfully!');
                 }
+
+                // Add new variation to the db
+
+                if (Object.entries(newVariations).length !== 0) {
+                    const { status, error } = await supabaseClient
+                        .from('Variations')
+                        .insert(newVariationItems)
+                        .select();
+
+                    if (error) {
+                        throw new Error(error);
+                    }
+                    if (status === 201) {
+                        setSuccessMessage(session, 'Updated successfully!');
+                    }
+                }
+
             } else if (intent === 'cancel') {
                 return { ok: true };
             }
@@ -312,7 +334,7 @@ export async function action({ request, params }) {
 export default function Product() {
     const { product, categories } = useLoaderData();
 
-    console.log({ product });
+    // console.log({ product });
 
     const params = useParams();
     const productId = Number(params.id);
@@ -337,6 +359,7 @@ export default function Product() {
 
     // console.log({ size });
     // console.log({ colour });
+    console.log({ formData: navigation.formData?.entries() });
 
     const addImageRef = useRef(null);
 
@@ -379,8 +402,27 @@ export default function Product() {
         setColour(newColour);
     }
 
+    function getEntriesWithPrefix(formData, prefix) {
+        return Array.from(formData.entries())
+            .filter(([key, _]) => key.startsWith(prefix))
+            .reduce((acc, [key, value]) => {
+                acc[key] = value;
+                return acc;
+            }, {});
+    }
+    let newColourEntries = {};
+    let newSizeEntries = {};
+    if (navigation.formData) {
+        newColourEntries = getEntriesWithPrefix(navigation.formData, 'newcolour-');
+        console.log({ newColourEntries });
+        console.log('1');
+
+        newSizeEntries = getEntriesWithPrefix(navigation.formData, 'newsize-');
+        console.log({ newSizeEntries });
+    }
+
     return (
-        <div className="lg:max-w-4xl 2xl:max-w-6xl mt-8 md:mt-12">
+        <div className="lg:max-w-4xl 2xl:max-w-6xl my-8 md:my-12">
             {/* TODO: Implement cancel functionality */}
             <Link to="/dashboard/products" className="flex gap-2 hover:text-brand-orange transition duration-300 ease-in-out">
                 <ArrowLeftIcon /> Back to products
@@ -651,7 +693,15 @@ export default function Product() {
 
             </Form>
 
-            <Form method="post" className="mt-4 border border-slate-200 rounded p-6">
+            <Form
+                method="post"
+                onSubmit={() => {
+                    console.log('2');
+                    setSize([]);
+                    setColour([]);
+                }}
+                className="mt-4 border border-slate-200 rounded p-6"
+            >
                 <fieldset>
                     <legend className="font-semibold">Variants</legend>
                     {/* TODO: Add variants */}
@@ -760,6 +810,27 @@ export default function Product() {
                                         }
                                     </FormSpacer>
                                 ))}
+                                {(isSubmitting && navigation.formData?.get('_action') === 'variant' && navigation.formData?.get('intent') === 'save')
+                                    ? Object.entries(newColourEntries).length !== 0
+                                        ? (
+                                            Object.entries(newColourEntries).map((entry, index) => (
+                                                (
+                                                    <FormSpacer key={index}>
+                                                        <Label htmlFor={entry[0]}>Colour</Label>
+                                                        <Input
+                                                            type='text'
+                                                            name={entry[0]}
+                                                            id={entry[0]}
+                                                            defaultValue={entry[1]}
+                                                        // className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.[`colour-${colour.id}`] ? 'border border-red-500' : ''}`}
+                                                        />
+                                                    </FormSpacer>
+                                                )
+                                            ))
+                                        )
+                                        : null
+                                    : null
+                                }
                                 <div className="space-y-2 mt-2">
                                     {colour.length > 0
                                         ? (
@@ -780,7 +851,7 @@ export default function Product() {
                                                             type='text'
                                                             name={`newcolour-${colourInput.id}`}
                                                             id={colourInput.id}
-                                                            defaultValue={product.data.variation[1].value}
+                                                            // defaultValue={product.data.variation[1].value}
                                                             className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.[`colour-${colourInput.id}`] ? 'border border-red-500' : ''}`}
                                                         />
                                                         {/* FIXME: Highlight the correct input error field */}
