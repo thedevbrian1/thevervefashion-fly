@@ -1,9 +1,12 @@
 import { json } from "@remix-run/node";
 import { Form, Link, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
+import { HoneypotInputs } from "remix-utils/honeypot/react";
+import { SpamError } from "remix-utils/honeypot/server";
 import { ArrowLeftIcon } from "~/components/Icon";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { honeypot } from "~/honeypot.server";
 import { getCartProducts } from "~/models/product.server";
 import { getSession } from "~/session.server";
 import { badRequest, sendEmail, trimValue, validateEmail, validatePhone, validateText } from "~/utils";
@@ -33,6 +36,16 @@ export async function loader({ request }) {
 
 export async function action({ request }) {
     const formData = await request.formData();
+
+    try {
+        honeypot.check(formData);
+    } catch (error) {
+        if (error instanceof SpamError) {
+            throw new Response('Form not submitted properly', { status: 400 });
+        }
+        throw error;
+    }
+
     const name = formData.get('name');
     // const mpesa = formData.get('mpesa');
     const contact = formData.get('contact');
@@ -124,6 +137,7 @@ export default function Checkout() {
                         <div className="border border-slate-200 rounded p-6 self-start">
                             <h2 className="font-semibold">Contact info</h2>
                             <Form method="post" className="mt-4">
+                                <HoneypotInputs />
                                 <fieldset className="space-y-4">
                                     <div>
                                         <Label htmlFor="name">Name</Label>

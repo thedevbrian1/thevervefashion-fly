@@ -41,6 +41,7 @@
     "react-instantsearch": "^7.3.0",
     "react-instantsearch-core": "^7.5.0",
     "react-toastify": "^9.1.3",
+    "remix-utils": "^7.5.0",
     "tailwind-merge": "^2.1.0",
     "tailwindcss-animate": "^1.0.7",
     "tiny-invariant": "^1.3.1"

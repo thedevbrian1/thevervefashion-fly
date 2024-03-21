@@ -28,6 +28,8 @@ import Nav from "./components/Nav";
 import Input from "./components/Input";
 import { getSession, sessionStorage } from "./session.server";
 import { createClient } from "./supabase.server";
+import { honeypot } from "~/honeypot.server";
+import { HoneypotProvider } from "remix-utils/honeypot/react";
 
 export const links = () => [
   { rel: "stylesheet", href: tailwindStyles },
@@ -58,18 +60,18 @@ export async function loader({ request }) {
   const allHeaders = { ...Object.fromEntries(headers.entries()), "Set-Cookie": await sessionStorage.commitSession(session) };
 
   if (!toastMessage) {
-    return json({ toastMessage: null, isLoggedIn, cartCount }, {
+    return json({ toastMessage: null, isLoggedIn, cartCount, honeypotInputProps: honeypot.getInputProps() }, {
       headers: allHeaders
     });
   }
 
-  return json({ toastMessage, isLoggedIn, cartCount }, {
+  return json({ toastMessage, isLoggedIn, cartCount, honeypotInputProps: honeypot.getInputProps() }, {
     headers: allHeaders
   });
 }
 
 export default function App() {
-  const { toastMessage, isLoggedIn } = useLoaderData();
+  const { toastMessage, isLoggedIn, honeypotInputProps } = useLoaderData();
   const actionData = useActionData();
   const location = useLocation();
   const navigation = useNavigation();
@@ -201,7 +203,9 @@ export default function App() {
             </InstantSearch>
           </div>
         </header>
-        <Outlet />
+        <HoneypotProvider {...honeypotInputProps}>
+          <Outlet />
+        </HoneypotProvider>
         {location.pathname.includes('/dashboard')
           ? null
           : (

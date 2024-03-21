@@ -1,10 +1,26 @@
 import { Form } from "@remix-run/react";
+import { HoneypotInputs } from "remix-utils/honeypot/react";
+import { SpamError } from "remix-utils/honeypot/server";
 import FormSpacer from "~/components/FormSpacer";
 import { EnvelopeIcon, PhoneIcon } from "~/components/Icon";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
+import { honeypot } from "~/honeypot.server";
 
+export async function action({ request }) {
+    const formData = await request.formData();
+
+    try {
+        honeypot.check(formData);
+    } catch (error) {
+        if (error instanceof SpamError) {
+            throw new Response('Form not submitted properly', { status: 400 });
+        }
+        throw error;
+    }
+    return null;
+}
 export default function Contact() {
     return (
         <main className="-mt-36">
@@ -43,6 +59,7 @@ export default function Contact() {
                 <div>
                     <h2 className="text-center font-semibold">Send us a message</h2>
                     <Form method="post" className="mt-4 max-w-xs lg:max-w-sm mx-auto">
+                        <HoneypotInputs />
                         <fieldset className="space-y-4">
                             <FormSpacer>
                                 <Label htmlFor="name">Name</Label>
