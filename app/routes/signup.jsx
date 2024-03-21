@@ -5,7 +5,7 @@ import FormSpacer from "~/components/FormSpacer";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { badRequest, trimValue, validateEmail, validatePassword, validatePhone } from "../utils";
+import { badRequest, trimValue, validateEmail, validatePassword, validatePhone, validateText } from "../utils";
 import { ErrorIllustration, EyeIcon, EyeslashIcon } from "~/components/Icon";
 import { getSession, sessionStorage, setSuccessMessage } from "~/session.server";
 import { useState } from "react";
@@ -13,6 +13,8 @@ import { useState } from "react";
 export async function action({ request }) {
     const session = await getSession(request);
     const formData = await request.formData();
+    const firstName = formData.get('firstName');
+    const lastName = formData.get('lastName');
     const phone = formData.get('phone');
     const email = formData.get('email');
     const password = formData.get('password');
@@ -21,6 +23,8 @@ export async function action({ request }) {
     const trimmedPhone = trimValue(phone);
 
     const fieldErrors = {
+        firstName: validateText(firstName),
+        lastName: validateText(lastName),
         phone: validatePhone(trimmedPhone),
         email: validateEmail(email),
         password: validatePassword(password),
@@ -58,11 +62,21 @@ export async function action({ request }) {
         throw new Error(error);
     }
 
-    // console.log({ data });
 
     // Check if email is used
     if (data && data.user.identities && data.user.identities.length === 0) {
         return badRequest({ fieldErrors: { email: 'Email address already in use. Try another email' } });
+    }
+
+    const { data: customer, error: customerError } = await supabaseClient
+        .from('Customers')
+        .insert([
+            { first_name: firstName, last_name: lastName, phone: trimmedPhone, user_id: data.user.id },
+        ])
+        .select();
+
+    if (customerError) {
+        throw new Error(customerError);
     }
 
     // Success toast
@@ -87,6 +101,40 @@ export default function Signup() {
                 <h1 className="font-heading text-2xl lg:text-3xl">Signup</h1>
                 <Form method="post" className="mt-4">
                     <fieldset className="space-y-4">
+                        <FormSpacer>
+                            <Label htmlFor="firstName">
+                                First Name
+                            </Label>
+                            <Input
+                                type="text"
+                                name="firstName"
+                                id="firstName"
+                                placeholder="John"
+                                className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.firstName ? 'border border-red-500' : ''}`}
+                            />
+                            {actionData?.fieldErrors?.firstName
+                                ? <p className="text-red-500 text-sm transition ease-in-out duration-300">{actionData.fieldErrors.firstName}</p>
+                                : null
+                            }
+
+                        </FormSpacer>
+                        <FormSpacer>
+                            <Label htmlFor="lastName">
+                                Last Name
+                            </Label>
+                            <Input
+                                type="text"
+                                name="lastName"
+                                id="lastName"
+                                placeholder="Doe"
+                                className={`focus-visible:ring-brand-purple ${actionData?.fieldErrors?.lastName ? 'border border-red-500' : ''}`}
+                            />
+                            {actionData?.fieldErrors?.lastName
+                                ? <p className="text-red-500 text-sm transition ease-in-out duration-300">{actionData.fieldErrors.lastName}</p>
+                                : null
+                            }
+
+                        </FormSpacer>
                         <FormSpacer>
                             <Label htmlFor="phone">
                                 Phone
